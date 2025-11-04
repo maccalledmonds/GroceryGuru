@@ -1,19 +1,16 @@
 from thefuzz import fuzz, process
 from typing import List, Dict
+import csv
 
-from thefuzz import fuzz
-from thefuzz import process
-from typing import List, Dict
+
 
 class IngredientNormalizer:
     def __init__(self):
         # Example ingredient dictionary - you can expand this or load from a database
-        self.standard_ingredients = [
-            "tomato", "onion", "garlic", "chicken", "beef",
-            "carrot", "potato", "rice", "pasta", "olive oil"
-        ]
+        with open("standard_ingredients_list.csv", "r") as file:
+            self.standard_ingredients = [row[0] for row in csv.reader(file) if row]
         
-    def normalize_ingredient(self, input_text: str, score_cutoff: int = 80) -> str:
+    def normalize_ingredient(self, input_text: str, limit: str = 3) -> str:
         """
         Normalize user input to standard ingredient names using fuzzy matching
         
@@ -27,11 +24,11 @@ class IngredientNormalizer:
         input_text = input_text.lower().strip()
         
         # Find the best match from standard ingredients
-        match = process.extractOne(
+        match = process.extract(
             input_text,
             self.standard_ingredients,
             scorer=fuzz.ratio,
-            score_cutoff=score_cutoff
+            limit = limit
         )
         
         return match[0] if match else input_text
@@ -47,14 +44,18 @@ class IngredientNormalizer:
 if __name__ == "__main__":
     normalizer = IngredientNormalizer()
     
-    # Test cases
-    test_inputs = [
-        "tomaeto",  # misspelling
-        "onions",   # plural
-        "garlick",  # misspelling
-        "chicken breast",  # compound term
-    ]
+
+    inputs_list = []
+    while True:
+        test_inputs = input("What ingredients do you have? ")
+        if test_inputs.lower() == "done":
+            break
+        else:
+            inputs_list.append(test_inputs)
+            print(inputs_list)
     
-    for ingredient in test_inputs:
+    
+    
+    for ingredient in inputs_list:
         normalized = normalizer.normalize_ingredient(ingredient)
         print(f"Input: {ingredient} -> Normalized: {normalized}")
