@@ -1,2 +1,3 @@
-1. Running fuzzy string matching using "thefuzz" python library requires a python version greater than 3.8
-
+A platform that recommends recipes based on ingredients users already have on hand. 
+The system will let users either type their available ingredients or upload a photo 
+of their pantry, then return recipes that are exact or partial matches.
