@@ -1,6 +1,7 @@
 from typing import List, Dict, Tuple, Optional
 import csv
 import re
+import streamlit as st
 
 # try to use RapidFuzz for speed; fall back to thefuzz if not installed
 try:
@@ -149,19 +150,18 @@ class IngredientNormalizer:
         return suggestions[0][0]
 
 
+st.title("Logic Process Testing")
+
 # test usage
 if __name__ == "__main__":
     normalizer = IngredientNormalizer()
-    while True:
-        user = input("Ingredient (or 'done'): ").strip()
-        if not user or user.lower() == "done":
-            break
-        suggestions = normalizer.normalize_ingredient(user, top_k=5)
-        if not suggestions:
-            print("No suggestions found.")
-        else:
-            print("Suggestions (ranked):")
-            for ingredient, score in suggestions:
-                category = normalizer.ingredient_to_category.get(ingredient, "")
-                print(f"  {ingredient}  (category={category}, score={score:.1f})")
-                print("\n")
+    user_input = st.text_input("Ingredient: ", key = "ingredient_input").strip()
+    suggestions = normalizer.normalize_ingredient(user_input, top_k=5)
+    if not user_input:
+        st.write("No suggestions found.")
+    else:
+        st.subheader("Suggestions (ranked):")
+        for ingredient, score in suggestions:
+            category = normalizer.ingredient_to_category.get(ingredient, "")
+            st.info(f"  {ingredient}  (category={category}, score={score:.1f})")
+            
