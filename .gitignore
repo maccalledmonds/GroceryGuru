@@ -1,0 +1,48 @@
+# .gitignore for the GroceryGuru monorepo
+# ─────────────────────────────────────────
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.whl
+.venv/
+venv/
+ENV/
+*.env
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# Render / Vercel
+.vercel/
