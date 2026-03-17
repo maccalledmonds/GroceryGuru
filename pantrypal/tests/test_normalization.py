@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.utils.normalization import normalize_ingredients
+from pantrypal.app.utils.normalization import normalize_ingredients, with_default_pantry_ingredients
 
 
 def test_normalize_typo_heavy_input() -> None:
@@ -24,3 +24,33 @@ def test_normalize_preserves_unmatched_but_cleaned() -> None:
 
     assert normalized
     assert normalized[0] == "xyzingredient"
+
+
+def test_with_default_pantry_ingredients_adds_staples() -> None:
+    ingredients = ["Egg", " spinach "]
+
+    merged = with_default_pantry_ingredients(ingredients)
+
+    assert "Egg" in merged
+    assert "spinach" in merged
+    assert "salt" in merged
+    assert "black pepper" in merged
+    assert "water" in merged
+
+
+def test_with_default_pantry_ingredients_deduplicates_case_insensitive() -> None:
+    ingredients = ["salt", "Salt", "black pepper", "WATER"]
+
+    merged = with_default_pantry_ingredients(ingredients)
+
+    lowered = [item.lower() for item in merged]
+    assert lowered.count("salt") == 1
+    assert lowered.count("black pepper") == 1
+    assert lowered.count("water") == 1
+
+
+def test_normalize_chicken_prefers_whole_word_match_over_chickpea() -> None:
+    normalized = normalize_ingredients(["chicken"])
+
+    assert normalized
+    assert normalized[0] == "chicken breast"

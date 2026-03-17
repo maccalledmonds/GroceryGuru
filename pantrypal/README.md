@@ -16,6 +16,10 @@ PantryPal is a Streamlit recipe recommendation app that suggests recipes from in
 - Dietary filters (`vegetarian`, `vegan`, `gluten_free`, `high_protein`)
 - Nutrition integration utility with USDA FoodData Central API + local cache
 - Unit tests for normalization and scoring
+- AI-enhanced recommendation endpoint with:
+  - semantic retrieval over local recipe corpus (FAISS + sentence-transformers)
+  - Groq-hosted Llama ranking with grounded explanations
+  - deterministic fallback to existing scorer when AI fails or times out
 
 ## Project Structure
 
@@ -53,6 +57,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
+
+# Optional (for FastAPI AI endpoint usage)
+pip install -r ../backend/requirements.txt
 ```
 
 Copy env values:
@@ -72,6 +79,49 @@ streamlit run app/main.py
 ```bash
 pytest
 ```
+
+## AI Recommendation Setup (FastAPI)
+
+The AI pipeline is exposed through a separate endpoint to preserve compatibility:
+
+- `POST /api/recommend` -> deterministic scorer (legacy behavior)
+- `POST /api/recommend/ai` -> semantic retrieval + Groq Llama reasoning
+
+Set the required environment variables before running the FastAPI backend:
+
+```bash
+export GROQ_API_KEY="your-groq-api-key"
+export GROQ_MODEL="llama-3.1-8b-instant"
+export RAG_TOP_N="12"
+export RAG_EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
+```
+
+Optional timeout tuning:
+
+```bash
+export GROQ_TIMEOUT_SECONDS="8.0"
+```
+
+Start backend:
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+## How RAG Works Here
+
+1. At FastAPI startup, recipes are loaded from `data/recipes.json`.
+2. Each recipe is converted into retrieval text containing title, ingredients, tags, instructions snippet, and nutrition summary.
+3. Embeddings are built with `RAG_EMBEDDING_MODEL` and stored in a FAISS index.
+4. Index + metadata are cached on disk so startup can reuse them instead of rebuilding every request.
+5. `/api/recommend/ai` normalizes user ingredients, retrieves top-N semantic candidates, and asks Llama to rank only those candidates.
+6. Model output is validated as strict JSON and mapped back into the existing recipe schema with an optional `explanation` field.
+
+## Fallback Behavior
+
+- If Groq is unavailable, times out, or returns invalid JSON, the AI endpoint falls back to the existing deterministic scorer.
+- Existing endpoint (`/api/recommend`) is unchanged and always deterministic.
+- Logs include retrieval count, Groq latency, and fallback events for diagnostics.
 
 ## Ranking Formula
 

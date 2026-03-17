@@ -8,17 +8,14 @@ export interface Nutrition {
 }
 
 export interface RecipeResult {
-  id: number;
+  id?: number | null;
+  type: "database" | "generated";
   title: string;
   score: number;
-  match_percentage: number;
-  exact_match_count: number;
-  coverage: number;
-  ingredient_match_ratio: number;
+  match_score?: number | null;
   ingredients: string[];
-  instructions: string;
-  diet_tags: string[];
-  nutrition: Nutrition;
+  instructions?: string[] | string | null;
+  missing_ingredients?: string[];
 }
 
 export interface RecommendRequest {
@@ -28,8 +25,11 @@ export interface RecommendRequest {
 }
 
 export interface RecommendResponse {
-  recipes: RecipeResult[];
+  on_hand_recipes: RecipeResult[];
+  related_recipes: RecipeResult[];
   normalized_ingredients: string[];
+  used_fallback: boolean;
+  fallback_reason?: string | null;
 }
 
 export interface FiltersResponse {
@@ -69,6 +69,13 @@ export const api = {
 
   recommend(req: RecommendRequest): Promise<RecommendResponse> {
     return apiFetch<RecommendResponse>("/api/recommend", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  recommendAI(req: RecommendRequest): Promise<RecommendResponse> {
+    return apiFetch<RecommendResponse>("/api/recommend/ai", {
       method: "POST",
       body: JSON.stringify(req),
     });

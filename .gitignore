@@ -21,6 +21,11 @@ ENV/
 !backend/.env.example
 !frontend/.env.example
 
+# Monorepo local env folder
+env/.env
+env/.env.local
+!env/.env.example
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb_checkpoints

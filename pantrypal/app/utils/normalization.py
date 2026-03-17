@@ -12,7 +12,7 @@ from rapidfuzz import fuzz, process
 import spacy
 from spacy.language import Language
 
-from ..config import FUZZY_THRESHOLD, INGREDIENT_VOCAB_PATH
+from ..config import DEFAULT_PANTRY_INGREDIENTS, FUZZY_THRESHOLD, INGREDIENT_VOCAB_PATH
 
 LOGGER = logging.getLogger(__name__)
 
@@ -102,6 +102,21 @@ def _normalize_single(raw_ingredient: str) -> str:
 
 
 def _fuzzy_match(candidate: str, vocab: Iterable[str]) -> str | None:
+    candidate_tokens = set(candidate.split())
+
+    # Prefer vocab entries that contain all candidate tokens as full words
+    # (e.g., "chicken" -> "chicken breast") before fuzzy fallback.
+    token_superset_matches: list[str] = []
+    for item in vocab:
+        item_tokens = set(item.split())
+        if candidate_tokens and candidate_tokens.issubset(item_tokens):
+            token_superset_matches.append(item)
+
+    if token_superset_matches:
+        # Pick the most specific short phrase that still contains the token(s).
+        token_superset_matches.sort(key=lambda item: (len(item.split()), len(item)))
+        return token_superset_matches[0]
+
     match = process.extractOne(candidate, vocab, scorer=fuzz.ratio)
     if not match:
         return None
@@ -110,6 +125,23 @@ def _fuzzy_match(candidate: str, vocab: Iterable[str]) -> str | None:
     if score < FUZZY_THRESHOLD:
         return None
     return best_match
+
+
+def with_default_pantry_ingredients(ingredients: list[str]) -> list[str]:
+    """Return ingredients plus always-available pantry staples (deduplicated)."""
+
+    deduped: dict[str, str] = {}
+
+    for raw in ingredients:
+        cleaned = raw.strip()
+        if not cleaned:
+            continue
+        deduped.setdefault(cleaned.lower(), cleaned)
+
+    for staple in DEFAULT_PANTRY_INGREDIENTS:
+        deduped.setdefault(staple.lower(), staple)
+
+    return list(deduped.values())
 
 
 def normalize_ingredients(ingredients: list[str]) -> list[str]:

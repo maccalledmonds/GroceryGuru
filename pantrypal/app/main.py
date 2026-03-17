@@ -11,20 +11,23 @@ try:
     from .config import DEFAULT_TOP_K, SUPPORTED_FILTERS
     from .models import load_recipes
     from .utils.image_classifier import predict_ingredients_from_image
-    from .utils.normalization import normalize_ingredients
+    from .utils.normalization import normalize_ingredients, with_default_pantry_ingredients
     from .utils.scoring import recommend_recipes
 except ImportError:
     try:
         from app.config import DEFAULT_TOP_K, SUPPORTED_FILTERS
         from app.models import load_recipes
         from app.utils.image_classifier import predict_ingredients_from_image
-        from app.utils.normalization import normalize_ingredients
+        from app.utils.normalization import normalize_ingredients, with_default_pantry_ingredients
         from app.utils.scoring import recommend_recipes
     except ImportError:
         from pantrypal.app.config import DEFAULT_TOP_K, SUPPORTED_FILTERS
         from pantrypal.app.models import load_recipes
         from pantrypal.app.utils.image_classifier import predict_ingredients_from_image
-        from pantrypal.app.utils.normalization import normalize_ingredients
+        from pantrypal.app.utils.normalization import (
+            normalize_ingredients,
+            with_default_pantry_ingredients,
+        )
         from pantrypal.app.utils.scoring import recommend_recipes
 
 
@@ -97,7 +100,7 @@ def main() -> None:
             st.warning("Please provide ingredients via text input or image upload.")
             return
 
-        normalized = normalize_ingredients(all_inputs)
+        normalized = normalize_ingredients(with_default_pantry_ingredients(all_inputs))
         if not normalized:
             st.warning("No valid ingredients were recognized. Try different ingredient names.")
             return

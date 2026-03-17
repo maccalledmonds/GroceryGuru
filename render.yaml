@@ -13,6 +13,14 @@ services:
     envVars:
       - key: USDA_API_KEY
         sync: false          # set manually in Render dashboard
+      - key: GROQ_API_KEY
+        sync: false          # required for /api/recommend/ai endpoint
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: RAG_TOP_N
+        value: "12"
+      - key: RAG_EMBEDDING_MODEL
+        value: sentence-transformers/all-MiniLM-L6-v2
       - key: ALLOWED_ORIGINS
         sync: false          # set to your Vercel URL after first deploy
       - key: LOG_LEVEL

@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..config import (
+    HIGH_IMPORTANCE_INGREDIENT_KEYWORDS,
+    HIGH_IMPORTANCE_WEIGHT,
+    LOW_IMPORTANCE_INGREDIENT_KEYWORDS,
+    LOW_IMPORTANCE_WEIGHT,
+    NORMAL_IMPORTANCE_WEIGHT,
+)
 from ..models import Recipe, recipe_to_dict
 
 
@@ -14,6 +21,24 @@ def _matches_filter(recipe: Recipe, filters: list[str] | None) -> bool:
     return set(filters).issubset(recipe_tags)
 
 
+def _ingredient_weight(ingredient: str) -> float:
+    normalized = ingredient.strip().lower()
+    if not normalized:
+        return NORMAL_IMPORTANCE_WEIGHT
+
+    if any(keyword in normalized for keyword in HIGH_IMPORTANCE_INGREDIENT_KEYWORDS):
+        return HIGH_IMPORTANCE_WEIGHT
+
+    if any(keyword in normalized for keyword in LOW_IMPORTANCE_INGREDIENT_KEYWORDS):
+        return LOW_IMPORTANCE_WEIGHT
+
+    return NORMAL_IMPORTANCE_WEIGHT
+
+
+def _weighted_sum(ingredients: set[str]) -> float:
+    return sum(_ingredient_weight(item) for item in ingredients)
+
+
 def _compute_recipe_score(recipe: Recipe, user_ingredients: list[str]) -> dict[str, float | int]:
     user_set = set(user_ingredients)
     # Prefer pre-normalized ingredients (covers scraped recipes whose raw
@@ -21,14 +46,20 @@ def _compute_recipe_score(recipe: Recipe, user_ingredients: list[str]) -> dict[s
     # onion" which would never exact-match user input).
     recipe_ingredients = recipe.ingredients_normalized or recipe.ingredients
     recipe_set = set(recipe_ingredients)
+    matched_set = user_set.intersection(recipe_set)
 
-    overlap = len(user_set.intersection(recipe_set))
+    overlap = len(matched_set)
     recipe_total = len(recipe_set)
     user_total = len(user_set)
 
-    coverage = overlap / recipe_total if recipe_total else 0.0
-    ingredient_match_ratio = overlap / user_total if user_total else 0.0
-    score = 0.7 * coverage + 0.3 * ingredient_match_ratio
+    recipe_weight_total = _weighted_sum(recipe_set)
+    matched_recipe_weight = _weighted_sum(matched_set)
+    user_weight_total = _weighted_sum(user_set)
+    matched_user_weight = _weighted_sum(matched_set)
+
+    coverage = matched_recipe_weight / recipe_weight_total if recipe_weight_total else 0.0
+    ingredient_match_ratio = matched_user_weight / user_weight_total if user_weight_total else 0.0
+    score = 0.75 * coverage + 0.25 * ingredient_match_ratio
 
     return {
         "exact_match_count": overlap,

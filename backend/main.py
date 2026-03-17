@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+import logging
+import os
 import sys
+import time
 from pathlib import Path
 
 # Make the monorepo root importable so `pantrypal` is on the path.
@@ -17,24 +21,68 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from pantrypal.app.config import DEFAULT_TOP_K, SUPPORTED_FILTERS
-from pantrypal.app.models import load_recipes
-from pantrypal.app.utils.normalization import normalize_ingredients
-from pantrypal.app.utils.scoring import recommend_recipes
+from pantrypal.app.config import (
+    GROQ_TIMEOUT_SECONDS,
+    get_groq_api_key,
+    validate_ai_runtime_config,
+)
+from pantrypal.app.utils.database_engine import warm_recipe_cache
+from pantrypal.app.utils.hybrid_engine import HybridRecommendationEngine
+from pantrypal.app.utils.llm_engine import LLMRecipeEngine, LLMRecipeEngineError
 
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
 
+
+def _initialize_hybrid_services(app: FastAPI) -> None:
+    """Initialize and cache hybrid recommendation dependencies."""
+
+    config_errors = validate_ai_runtime_config()
+    if config_errors:
+        raise RuntimeError(f"Invalid AI runtime configuration: {config_errors}")
+
+    app.state.hybrid_recommender = None
+    app.state.ai_config_error = None
+
+    try:
+        warm_recipe_cache()
+
+        api_key = get_groq_api_key()
+        llm_engine = None
+        if not api_key:
+            app.state.ai_config_error = "Missing GROQ_API_KEY. Hybrid endpoint will return database-only results."
+            LOGGER.warning(app.state.ai_config_error)
+        else:
+            llm_engine = LLMRecipeEngine(
+                api_key=api_key,
+                model="llama-3.1-8b-instant",
+                timeout_seconds=GROQ_TIMEOUT_SECONDS,
+            )
+
+        app.state.hybrid_recommender = HybridRecommendationEngine(llm_engine=llm_engine)
+        LOGGER.info("Hybrid services initialized successfully")
+    except (LLMRecipeEngineError, RuntimeError) as exc:
+        app.state.ai_config_error = str(exc)
+        app.state.hybrid_recommender = HybridRecommendationEngine(llm_engine=None)
+        LOGGER.exception("Hybrid services initialization failed: %s", exc)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _initialize_hybrid_services(app)
+    yield
+
+
 app = FastAPI(
     title="PantryPal API",
     version="1.0.0",
     description="Recipe recommendation API backed by ingredient matching and USDA nutrition data.",
+    lifespan=lifespan,
 )
 
 # Allow any Vercel deployment preview URL plus localhost dev origins.
 # In production set ALLOWED_ORIGINS env var (comma-separated).
-import os
-
 _raw_origins = os.getenv(
     "ALLOWED_ORIGINS",
     "http://localhost:5173,http://localhost:3000",
@@ -61,34 +109,58 @@ class RecommendRequest(BaseModel):
     top_k: int = Field(default=DEFAULT_TOP_K, ge=1, le=20, description="Number of results")
 
 
-class NutritionOut(BaseModel):
-    calories: float
-    protein: float
-    fat: float
-    carbs: float
-
-
 class RecipeResult(BaseModel):
-    id: int
+    id: int | None = None
+    type: str
     title: str
-    score: float
-    match_percentage: float
-    exact_match_count: int
-    coverage: float
-    ingredient_match_ratio: float
     ingredients: list[str]
-    instructions: str
-    diet_tags: list[str]
-    nutrition: NutritionOut
+    missing_ingredients: list[str] = Field(default_factory=list)
+    instructions: list[str] | str | None = None
+    score: float
+    match_score: float | None = None
 
 
 class RecommendResponse(BaseModel):
-    recipes: list[RecipeResult]
+    on_hand_recipes: list[RecipeResult]
+    related_recipes: list[RecipeResult]
     normalized_ingredients: list[str]
+    used_fallback: bool
+    fallback_reason: str | None = None
 
 
 class FiltersResponse(BaseModel):
     filters: list[str]
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+def _validate_and_normalize_request(body: RecommendRequest) -> list[str]:
+    invalid = set(body.filters) - SUPPORTED_FILTERS
+    if invalid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown filter(s): {sorted(invalid)}. Valid filters: {sorted(SUPPORTED_FILTERS)}",
+        )
+
+    raw = [i.strip() for i in body.ingredients if i.strip()]
+    if not raw:
+        raise HTTPException(status_code=400, detail="ingredients list must not be empty after stripping whitespace")
+
+    return raw
+
+
+def _to_recipe_response_item(raw_recipe: dict[str, Any]) -> RecipeResult:
+    return RecipeResult(
+        id=raw_recipe.get("id"),
+        type=raw_recipe["type"],
+        title=raw_recipe["title"],
+        ingredients=raw_recipe.get("ingredients", []),
+        missing_ingredients=raw_recipe.get("missing_ingredients", []),
+        instructions=raw_recipe.get("instructions"),
+        score=raw_recipe["score"],
+        match_score=raw_recipe.get("match_score"),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -114,49 +186,37 @@ def recommend(body: RecommendRequest) -> RecommendResponse:
     Accept a list of raw ingredient strings (and optional dietary filters),
     normalize them, score recipes, and return the top-K matches.
     """
-    # Validate filters early so the client gets a clear 400 error.
-    invalid = set(body.filters) - SUPPORTED_FILTERS
-    if invalid:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown filter(s): {sorted(invalid)}. Valid filters: {sorted(SUPPORTED_FILTERS)}",
-        )
+    raw_ingredients = _validate_and_normalize_request(body)
 
-    # Strip blank / whitespace-only entries.
-    raw = [i.strip() for i in body.ingredients if i.strip()]
-    if not raw:
-        raise HTTPException(status_code=400, detail="ingredients list must not be empty after stripping whitespace")
+    hybrid_recommender: HybridRecommendationEngine | None = getattr(
+        app.state,
+        "hybrid_recommender",
+        None,
+    )
+    if hybrid_recommender is None:
+        raise HTTPException(status_code=503, detail="Hybrid recommender is not initialized")
 
-    normalized = normalize_ingredients(raw)
-    if not normalized:
-        raise HTTPException(
-            status_code=422,
-            detail="None of the provided ingredients could be recognized. Try different names.",
-        )
-
-    recipes = load_recipes()
-    results: list[dict[str, Any]] = recommend_recipes(
-        user_ingredients=normalized,
-        recipes=recipes,
-        top_k=body.top_k,
-        filters=body.filters or None,
+    start = time.perf_counter()
+    result = hybrid_recommender.recommend_recipes(user_ingredients=raw_ingredients, top_k=body.top_k)
+    elapsed_ms = int((time.perf_counter() - start) * 1000)
+    LOGGER.info(
+        "Hybrid endpoint completed (fallback=%s, reason=%s, latency_ms=%d)",
+        result.used_fallback,
+        result.fallback_reason,
+        elapsed_ms,
     )
 
-    recipe_results = [
-        RecipeResult(
-            id=r["id"],
-            title=r["title"],
-            score=r["score"],
-            match_percentage=r["match_percentage"],
-            exact_match_count=r["exact_match_count"],
-            coverage=r["coverage"],
-            ingredient_match_ratio=r["ingredient_match_ratio"],
-            ingredients=r["ingredients"],
-            instructions=r["instructions"],
-            diet_tags=r["diet_tags"],
-            nutrition=NutritionOut(**r["nutrition"]),
-        )
-        for r in results
-    ]
+    return RecommendResponse(
+        on_hand_recipes=[_to_recipe_response_item(item) for item in result.on_hand_recipes],
+        related_recipes=[_to_recipe_response_item(item) for item in result.related_recipes],
+        normalized_ingredients=result.normalized_ingredients,
+        used_fallback=result.used_fallback,
+        fallback_reason=result.fallback_reason,
+    )
 
-    return RecommendResponse(recipes=recipe_results, normalized_ingredients=normalized)
+
+@app.post("/api/recommend/ai", response_model=RecommendResponse, tags=["recommend"])
+def recommend_ai(body: RecommendRequest) -> RecommendResponse:
+    """Alias endpoint for hybrid recommendations with database + LLM merge."""
+
+    return recommend(body)

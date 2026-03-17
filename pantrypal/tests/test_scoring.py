@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from app.models import load_recipes
-from app.utils.scoring import recommend_recipes
+from pantrypal.app.models import load_recipes
+from pantrypal.app.utils.scoring import recommend_recipes
 
 
 RECIPES = load_recipes()
@@ -14,7 +14,7 @@ def test_recommend_empty_input_returns_empty() -> None:
 
 
 def test_recommend_no_matches_returns_empty() -> None:
-    results = recommend_recipes(["dragonfruit", "star anise"], RECIPES, top_k=5)
+    results = recommend_recipes(["zzqv_ingredient", "xxk9_ingredient"], RECIPES, top_k=5)
     assert results == []
 
 
@@ -40,3 +40,11 @@ def test_recommend_respects_dietary_filters() -> None:
     results = recommend_recipes(query, RECIPES, top_k=5, filters=["vegan"])
 
     assert all("vegan" in item["diet_tags"] for item in results)
+
+
+def test_recommend_prioritizes_core_ingredients_over_spices() -> None:
+    query = ["salmon", "asparagus", "salt", "black pepper"]
+    results = recommend_recipes(query, RECIPES, top_k=5)
+
+    assert results
+    assert results[0]["title"] == "Baked Salmon and Asparagus"

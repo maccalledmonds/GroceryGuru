@@ -6,8 +6,6 @@ import { RecipeCard } from "./components/RecipeCard";
 import { useRecommend } from "./hooks/useRecommend";
 
 const SPICE_OPTIONS = [
-  "salt",
-  "black pepper",
   "garlic",
   "ginger",
   "turmeric",
@@ -28,6 +26,8 @@ const SPICE_OPTIONS = [
   "hot sauce",
   "curry paste",
 ];
+
+const AUTO_INCLUDED_PANTRY = ["salt", "black pepper", "water"] as const;
 
 // Skeleton card for the loading state
 function SkeletonCard() {
@@ -55,9 +55,19 @@ export default function App() {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [selectedSpices, setSelectedSpices] = useState<string[]>([]);
   const [topK, setTopK] = useState(5);
+  const [servingMultiplier, setServingMultiplier] = useState(1);
   const [availableFilters, setAvailableFilters] = useState<string[]>([]);
 
-  const { status, recipes, normalizedIngredients, error, recommend } = useRecommend();
+  const {
+    status,
+    onHandRecipes,
+    relatedRecipes,
+    normalizedIngredients,
+    usedFallback,
+    fallbackReason,
+    error,
+    recommend,
+  } = useRecommend();
 
   // Fetch available filters from the API once on mount
   useEffect(() => {
@@ -72,7 +82,9 @@ export default function App() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const requestIngredients = Array.from(new Set([...ingredients, ...selectedSpices]));
+    const requestIngredients = Array.from(
+      new Set([...ingredients, ...selectedSpices, ...AUTO_INCLUDED_PANTRY]),
+    );
     if (requestIngredients.length === 0) return;
     recommend({ ingredients: requestIngredients, filters: selectedFilters, top_k: topK });
   }
@@ -129,6 +141,9 @@ export default function App() {
                   Press <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">Enter</kbd> or{" "}
                   <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">,</kbd> after each ingredient
                 </p>
+                <p className="mt-1 text-xs text-gray-400">
+                  Always included automatically: salt, black pepper, and water.
+                </p>
               </div>
 
               {/* Mobile filters inline */}
@@ -153,6 +168,27 @@ export default function App() {
                   <span className="text-gray-600 font-medium">{normalizedIngredients.join(", ")}</span>
                 </p>
               )}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Serving size</label>
+                <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1">
+                  {[1, 2, 4].map((multiplier) => (
+                    <button
+                      key={multiplier}
+                      type="button"
+                      onClick={() => setServingMultiplier(multiplier)}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                        servingMultiplier === multiplier
+                          ? "bg-white text-brand-700 shadow-sm"
+                          : "text-gray-600 hover:text-gray-800"
+                      }`}
+                    >
+                      {multiplier}x
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Ingredient quantities are scaled when numeric amounts are available.</p>
+              </div>
 
               <button
                 type="submit"
@@ -196,22 +232,55 @@ export default function App() {
           )}
 
           {/* Results */}
-          {status === "success" && recipes.length > 0 && (
-            <section aria-label="Recipe recommendations">
-              <p className="mb-4 text-sm text-gray-500">
-                Found <strong className="text-gray-800">{recipes.length}</strong> matching recipe
-                {recipes.length !== 1 ? "s" : ""}
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {recipes.map((recipe, i) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} rank={i + 1} />
-                ))}
+          {status === "success" && (onHandRecipes.length > 0 || relatedRecipes.length > 0) && (
+            <section aria-label="Recipe recommendations" className="space-y-6">
+              {usedFallback && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  AI generation was unavailable, so these are database-backed results.
+                  {fallbackReason ? ` Reason: ${fallbackReason}` : ""}
+                </div>
+              )}
+
+              <div>
+                <p className="mb-3 text-sm font-semibold text-gray-700">On-hand recipes</p>
+                {onHandRecipes.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {onHandRecipes.map((recipe, i) => (
+                      <RecipeCard
+                        key={`${recipe.id ?? recipe.title}-on-hand`}
+                        recipe={recipe}
+                        rank={i + 1}
+                        servingMultiplier={servingMultiplier}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No exact on-hand matches yet.</p>
+                )}
+              </div>
+
+              <div>
+                <p className="mb-3 text-sm font-semibold text-gray-700">Related recipes (need extra ingredients)</p>
+                {relatedRecipes.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {relatedRecipes.map((recipe, i) => (
+                      <RecipeCard
+                        key={`${recipe.id ?? recipe.title}-related`}
+                        recipe={recipe}
+                        rank={i + 1}
+                        servingMultiplier={servingMultiplier}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No close related recipes found.</p>
+                )}
               </div>
             </section>
           )}
 
           {/* Empty state */}
-          {status === "success" && recipes.length === 0 && (
+          {status === "success" && onHandRecipes.length === 0 && relatedRecipes.length === 0 && (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
               <p className="text-4xl mb-3" aria-hidden>🔍</p>
               <p className="text-sm font-medium text-gray-700">No recipes matched your ingredients and filters.</p>
