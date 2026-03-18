@@ -22,8 +22,9 @@ class _FakeHybridResult:
 class _FastHybridRecommender:
     """Small deterministic recommender stub to measure endpoint overhead."""
 
-    def recommend_recipes(self, user_ingredients, top_k):
+    def recommend_recipes(self, user_ingredients, top_k, filters=None):
         _ = top_k
+        _ = filters
         time.sleep(0.02)
         return _FakeHybridResult(
             normalized_ingredients=list(user_ingredients),

@@ -4,14 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..config import (
-    HIGH_IMPORTANCE_INGREDIENT_KEYWORDS,
-    HIGH_IMPORTANCE_WEIGHT,
-    LOW_IMPORTANCE_INGREDIENT_KEYWORDS,
-    LOW_IMPORTANCE_WEIGHT,
-    NORMAL_IMPORTANCE_WEIGHT,
-)
 from ..models import Recipe, recipe_to_dict
+from .normalization import normalize_ingredient
 
 
 def _matches_filter(recipe: Recipe, filters: list[str] | None) -> bool:
@@ -21,50 +15,41 @@ def _matches_filter(recipe: Recipe, filters: list[str] | None) -> bool:
     return set(filters).issubset(recipe_tags)
 
 
-def _ingredient_weight(ingredient: str) -> float:
-    normalized = ingredient.strip().lower()
-    if not normalized:
-        return NORMAL_IMPORTANCE_WEIGHT
-
-    if any(keyword in normalized for keyword in HIGH_IMPORTANCE_INGREDIENT_KEYWORDS):
-        return HIGH_IMPORTANCE_WEIGHT
-
-    if any(keyword in normalized for keyword in LOW_IMPORTANCE_INGREDIENT_KEYWORDS):
-        return LOW_IMPORTANCE_WEIGHT
-
-    return NORMAL_IMPORTANCE_WEIGHT
+_MISSING_PENALTY_PER_INGREDIENT = 0.05
+_MAX_MISSING_PENALTY = 0.25
 
 
-def _weighted_sum(ingredients: set[str]) -> float:
-    return sum(_ingredient_weight(item) for item in ingredients)
+def _canonicalize_recipe_ingredients(recipe: Recipe) -> set[str]:
+    if recipe.ingredients_normalized:
+        return {item.strip().lower() for item in recipe.ingredients_normalized if item.strip()}
+
+    canonicalized: set[str] = set()
+    for ingredient in recipe.ingredients:
+        mapped = normalize_ingredient(ingredient)
+        value = mapped.canonical_name or mapped.normalized
+        if value:
+            canonicalized.add(value)
+    return canonicalized
 
 
 def _compute_recipe_score(recipe: Recipe, user_ingredients: list[str]) -> dict[str, float | int]:
     user_set = set(user_ingredients)
-    # Prefer pre-normalized ingredients (covers scraped recipes whose raw
-    # `ingredients` list contains full quantity strings like "2 cups chopped
-    # onion" which would never exact-match user input).
-    recipe_ingredients = recipe.ingredients_normalized or recipe.ingredients
-    recipe_set = set(recipe_ingredients)
+    recipe_set = _canonicalize_recipe_ingredients(recipe)
     matched_set = user_set.intersection(recipe_set)
 
     overlap = len(matched_set)
     recipe_total = len(recipe_set)
-    user_total = len(user_set)
+    missing_count = max(0, recipe_total - overlap)
 
-    recipe_weight_total = _weighted_sum(recipe_set)
-    matched_recipe_weight = _weighted_sum(matched_set)
-    user_weight_total = _weighted_sum(user_set)
-    matched_user_weight = _weighted_sum(matched_set)
-
-    coverage = matched_recipe_weight / recipe_weight_total if recipe_weight_total else 0.0
-    ingredient_match_ratio = matched_user_weight / user_weight_total if user_weight_total else 0.0
-    score = 0.75 * coverage + 0.25 * ingredient_match_ratio
+    base_score = overlap / recipe_total if recipe_total else 0.0
+    missing_penalty = min(_MAX_MISSING_PENALTY, _MISSING_PENALTY_PER_INGREDIENT * missing_count)
+    score = max(0.0, min(1.0, base_score - missing_penalty))
 
     return {
         "exact_match_count": overlap,
-        "coverage": coverage,
-        "ingredient_match_ratio": ingredient_match_ratio,
+        "coverage": base_score,
+        "ingredient_match_ratio": base_score,
+        "missing_count": missing_count,
         "score": score,
     }
 

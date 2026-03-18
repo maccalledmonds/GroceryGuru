@@ -19,6 +19,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
 from pantrypal.app.config import DEFAULT_TOP_K, SUPPORTED_FILTERS
 from pantrypal.app.config import (
@@ -33,6 +34,9 @@ from pantrypal.app.utils.llm_engine import LLMRecipeEngine, LLMRecipeEngineError
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
+
+# Load local backend/.env for development; existing shell env vars win.
+load_dotenv(Path(__file__).resolve().parent / ".env", override=False)
 
 
 def _initialize_hybrid_services(app: FastAPI) -> None:
@@ -135,8 +139,17 @@ class FiltersResponse(BaseModel):
 LOGGER = logging.getLogger(__name__)
 
 
-def _validate_and_normalize_request(body: RecommendRequest) -> list[str]:
-    invalid = set(body.filters) - SUPPORTED_FILTERS
+def _validate_and_normalize_request(body: RecommendRequest) -> tuple[list[str], list[str]]:
+    normalized_filters: list[str] = []
+    seen_filters: set[str] = set()
+    for value in body.filters:
+        candidate = value.strip().lower()
+        if not candidate or candidate in seen_filters:
+            continue
+        seen_filters.add(candidate)
+        normalized_filters.append(candidate)
+
+    invalid = set(normalized_filters) - SUPPORTED_FILTERS
     if invalid:
         raise HTTPException(
             status_code=400,
@@ -147,7 +160,7 @@ def _validate_and_normalize_request(body: RecommendRequest) -> list[str]:
     if not raw:
         raise HTTPException(status_code=400, detail="ingredients list must not be empty after stripping whitespace")
 
-    return raw
+    return raw, normalized_filters
 
 
 def _to_recipe_response_item(raw_recipe: dict[str, Any]) -> RecipeResult:
@@ -186,7 +199,7 @@ def recommend(body: RecommendRequest) -> RecommendResponse:
     Accept a list of raw ingredient strings (and optional dietary filters),
     normalize them, score recipes, and return the top-K matches.
     """
-    raw_ingredients = _validate_and_normalize_request(body)
+    raw_ingredients, normalized_filters = _validate_and_normalize_request(body)
 
     hybrid_recommender: HybridRecommendationEngine | None = getattr(
         app.state,
@@ -197,7 +210,11 @@ def recommend(body: RecommendRequest) -> RecommendResponse:
         raise HTTPException(status_code=503, detail="Hybrid recommender is not initialized")
 
     start = time.perf_counter()
-    result = hybrid_recommender.recommend_recipes(user_ingredients=raw_ingredients, top_k=body.top_k)
+    result = hybrid_recommender.recommend_recipes(
+        user_ingredients=raw_ingredients,
+        top_k=body.top_k,
+        filters=normalized_filters,
+    )
     elapsed_ms = int((time.perf_counter() - start) * 1000)
     LOGGER.info(
         "Hybrid endpoint completed (fallback=%s, reason=%s, latency_ms=%d)",

@@ -242,7 +242,8 @@ export default function App() {
               )}
 
               <div>
-                <p className="mb-3 text-sm font-semibold text-gray-700">On-hand recipes</p>
+                <p className="mb-1 text-sm font-semibold text-gray-700">Cook Now</p>
+                <p className="mb-3 text-xs text-gray-500">Recipes you can make with what you already have.</p>
                 {onHandRecipes.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {onHandRecipes.map((recipe, i) => (
@@ -255,12 +256,13 @@ export default function App() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No exact on-hand matches yet.</p>
+                  <p className="text-sm text-gray-500">No Cook Now matches yet.</p>
                 )}
               </div>
 
               <div>
-                <p className="mb-3 text-sm font-semibold text-gray-700">Related recipes (need extra ingredients)</p>
+                <p className="mb-1 text-sm font-semibold text-gray-700">Almost There</p>
+                <p className="mb-3 text-xs text-gray-500">Recipes close to your pantry list with a few missing items.</p>
                 {relatedRecipes.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {relatedRecipes.map((recipe, i) => (
@@ -273,7 +275,7 @@ export default function App() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No close related recipes found.</p>
+                  <p className="text-sm text-gray-500">No Almost There recommendations found.</p>
                 )}
               </div>
             </section>

@@ -2,16 +2,32 @@
 
 from __future__ import annotations
 
-from pantrypal.app.utils.normalization import normalize_ingredients, with_default_pantry_ingredients
+from pantrypal.app.utils.normalization import (
+    normalize_ingredient,
+    normalize_ingredients,
+    with_default_pantry_ingredients,
+)
 
 
-def test_normalize_typo_heavy_input() -> None:
-    raw = ["2 Tomatoes", "cheddar chese", "chikn breast"]
+def test_normalize_required_edge_cases() -> None:
+    raw = [
+        "Fresh Tomatoes",
+        "chopped onions",
+        "garlic cloves",
+        "chicken breasts",
+        "extra virgin olive oil",
+        "soy sauce",
+        "ice cream",
+    ]
     normalized = normalize_ingredients(raw)
 
     assert "tomato" in normalized
-    assert "cheddar cheese" in normalized
-    assert "chicken breast" in normalized
+    assert "onion" in normalized
+    assert "garlic" in normalized
+    assert "chicken" in normalized
+    assert "olive oil" in normalized
+    assert "soy sauce" in normalized
+    assert "ice cream" in normalized
 
 
 def test_normalize_empty_input() -> None:
@@ -19,11 +35,28 @@ def test_normalize_empty_input() -> None:
 
 
 def test_normalize_preserves_unmatched_but_cleaned() -> None:
-    raw = ["1 xyzingredient"]
+    raw = ["xyzingredient"]
     normalized = normalize_ingredients(raw)
 
     assert normalized
     assert normalized[0] == "xyzingredient"
+
+
+def test_normalize_ingredient_internal_contract_when_unmapped() -> None:
+    result = normalize_ingredient("mystery component")
+
+    assert result.raw == "mystery component"
+    assert result.normalized == "mystery component"
+    assert result.canonical_name is None
+    assert result.canonical_id is None
+
+
+def test_normalize_ingredient_internal_contract_when_mapped() -> None:
+    result = normalize_ingredient("garlic cloves")
+
+    assert result.normalized == "garlic clove"
+    assert result.canonical_name == "garlic"
+    assert result.canonical_id is not None
 
 
 def test_with_default_pantry_ingredients_adds_staples() -> None:
@@ -49,8 +82,8 @@ def test_with_default_pantry_ingredients_deduplicates_case_insensitive() -> None
     assert lowered.count("water") == 1
 
 
-def test_normalize_chicken_prefers_whole_word_match_over_chickpea() -> None:
-    normalized = normalize_ingredients(["chicken"])
+def test_deduplicate_after_normalization() -> None:
+    normalized = normalize_ingredients(["Tomatoes", "tomato", "fresh tomatoes"])
 
     assert normalized
-    assert normalized[0] == "chicken breast"
+    assert normalized == ["tomato"]

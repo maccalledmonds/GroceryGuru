@@ -1,0 +1,18 @@
+Read agent_log.md and review_checklist.md.
+
+Find the latest developer phase.
+
+Review strictly:
+- Ingredient matching correctness
+- Edge cases (empty pantry, partial matches)
+- Data assumptions
+- API structure
+- Code quality
+- If canonical dataset or normalization is incomplete → REJECT
+
+Output:
+- Issues (Critical / Medium / Minor)
+- Required fixes
+- APPROVED or REJECTED
+
+Append to agent_log.md.

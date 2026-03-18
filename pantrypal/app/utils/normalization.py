@@ -1,130 +1,213 @@
-"""Ingredient normalization pipeline."""
+"""Deterministic ingredient normalization using canonical dataset mappings."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import lru_cache
 import json
 import logging
 import re
-from typing import Iterable
 
-from rapidfuzz import fuzz, process
-import spacy
-from spacy.language import Language
-
-from ..config import DEFAULT_PANTRY_INGREDIENTS, FUZZY_THRESHOLD, INGREDIENT_VOCAB_PATH
+from ..config import CANONICAL_INGREDIENTS_PATH, DEFAULT_PANTRY_INGREDIENTS
 
 LOGGER = logging.getLogger(__name__)
 
-UNITS = {
-    "cup",
-    "cups",
-    "tbsp",
-    "tablespoon",
-    "tablespoons",
-    "tsp",
-    "teaspoon",
-    "teaspoons",
-    "oz",
-    "ounce",
-    "ounces",
-    "lb",
-    "lbs",
-    "pound",
-    "pounds",
-    "gram",
-    "grams",
-    "g",
-    "kg",
-    "ml",
-    "l",
-    "liter",
-    "liters",
-    "clove",
-    "cloves",
-    "slice",
-    "slices",
-    "piece",
-    "pieces",
+DESCRIPTORS: frozenset[str] = frozenset(
+    {
+        "fresh",
+        "chopped",
+        "diced",
+        "sliced",
+        "organic",
+        "large",
+        "small",
+        "extra",
+        "virgin",
+    }
+)
+
+MULTISPACE_PATTERN = re.compile(r"\s+")
+PUNCT_TO_SPACE_PATTERN = re.compile(r"[-/,.():;&]")
+OTHER_PUNCT_PATTERN = re.compile(r"[^a-z0-9\s]")
+
+IRREGULAR_SINGULARS = {
+    "tomatoes": "tomato",
+    "potatoes": "potato",
+    "leaves": "leaf",
+    "knives": "knife",
+    "loaves": "loaf",
+    "wives": "wife",
+    "wolves": "wolf",
+    "shelves": "shelf",
+    "thieves": "thief",
+    "lives": "life",
+    "people": "person",
+    "teeth": "tooth",
+    "feet": "foot",
+    "children": "child",
+    "men": "man",
+    "women": "woman",
+    "eggs": "egg",
+    "peppers": "pepper",
+    "onions": "onion",
+    "cloves": "clove",
 }
 
-QUANTITY_PATTERN = re.compile(r"\b\d+(?:[./]\d+)?\b")
-PUNCT_PATTERN = re.compile(r"[^a-zA-Z\s]")
-MULTISPACE_PATTERN = re.compile(r"\s+")
+
+@dataclass(frozen=True, slots=True)
+class CanonicalMatch:
+    """Canonical mapping for a normalized ingredient phrase."""
+
+    canonical_id: str
+    canonical_name: str
+
+
+@dataclass(frozen=True, slots=True)
+class NormalizedIngredient:
+    """Internal normalization result contract."""
+
+    raw: str
+    normalized: str
+    canonical_name: str | None
+    canonical_id: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class CanonicalIndex:
+    """In-memory canonical mapping index with deterministic lookups."""
+
+    by_phrase: dict[str, CanonicalMatch]
+
+
+def _normalize_dataset_phrase(value: str) -> str:
+    lowered = value.strip().lower()
+    return MULTISPACE_PATTERN.sub(" ", lowered).strip()
+
+
+def _normalize_lookup_phrase_for_index(value: str) -> str:
+    """Normalize dataset phrases into the same lookup form used for input phrases."""
+
+    lowered = value.strip().lower()
+    no_punct = _remove_punctuation(lowered)
+    no_descriptors = _remove_descriptors(no_punct)
+    normalized_space = MULTISPACE_PATTERN.sub(" ", no_descriptors).strip()
+    singularized = _singularize_phrase(normalized_space)
+    return MULTISPACE_PATTERN.sub(" ", singularized).strip()
 
 
 @lru_cache(maxsize=1)
-def _load_vocab() -> list[str]:
-    with INGREDIENT_VOCAB_PATH.open("r", encoding="utf-8") as handle:
-        vocab = json.load(handle)
+def _load_canonical_index() -> CanonicalIndex:
+    with CANONICAL_INGREDIENTS_PATH.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
 
-    if not isinstance(vocab, list):
-        raise ValueError("ingredients_vocab.json must contain a list")
+    ingredients = payload.get("ingredients") if isinstance(payload, dict) else None
+    if not isinstance(ingredients, list):
+        raise ValueError("canonical_ingredients.json must contain an ingredients array")
 
-    return [str(item).strip().lower() for item in vocab if str(item).strip()]
+    by_phrase: dict[str, CanonicalMatch] = {}
+
+    for item in ingredients:
+        if not isinstance(item, dict):
+            raise ValueError("canonical ingredient records must be objects")
+
+        canonical_id = str(item.get("id", "")).strip()
+        canonical_name = _normalize_dataset_phrase(str(item.get("canonical_name", "")))
+        aliases_raw = item.get("aliases", [])
+
+        if not canonical_id or not canonical_name:
+            raise ValueError("canonical ingredient record missing id or canonical_name")
+        if not isinstance(aliases_raw, list):
+            raise ValueError(f"aliases must be a list for {canonical_id}")
+
+        mapping = CanonicalMatch(canonical_id=canonical_id, canonical_name=canonical_name)
+
+        phrase_candidates = [canonical_name]
+        for alias in aliases_raw:
+            alias_phrase = _normalize_dataset_phrase(str(alias))
+            if alias_phrase:
+                phrase_candidates.append(alias_phrase)
+
+        for phrase in phrase_candidates:
+            lookup_phrase = _normalize_lookup_phrase_for_index(phrase)
+            if not lookup_phrase:
+                continue
+
+            existing = by_phrase.get(lookup_phrase)
+            if existing is not None and existing.canonical_id != canonical_id:
+                raise ValueError(
+                    "Alias/canonical collision detected for phrase "
+                    f"'{lookup_phrase}' between {existing.canonical_id} and {canonical_id}"
+                )
+            by_phrase[lookup_phrase] = mapping
+
+    return CanonicalIndex(by_phrase=by_phrase)
 
 
-@lru_cache(maxsize=1)
-def _get_nlp() -> Language:
-    try:
-        return spacy.load("en_core_web_sm", disable=["ner", "parser", "textcat"])
-    except OSError:
-        LOGGER.warning(
-            "spaCy model en_core_web_sm not installed; using blank English pipeline fallback."
+def _remove_punctuation(text: str) -> str:
+    punctuation_to_space = PUNCT_TO_SPACE_PATTERN.sub(" ", text)
+    no_apostrophe = punctuation_to_space.replace("'", "")
+    return OTHER_PUNCT_PATTERN.sub(" ", no_apostrophe)
+
+
+def _remove_descriptors(text: str) -> str:
+    tokens = text.split()
+    kept = [token for token in tokens if token not in DESCRIPTORS]
+    return " ".join(kept)
+
+
+def _singularize_token(token: str) -> str:
+    if not token:
+        return token
+    if token in IRREGULAR_SINGULARS:
+        return IRREGULAR_SINGULARS[token]
+    if token.endswith("ies") and len(token) > 3:
+        return token[:-3] + "y"
+    if token.endswith("oes") and len(token) > 3:
+        return token[:-2]
+    if token.endswith("s") and len(token) > 1 and not token.endswith(("ss", "us")):
+        return token[:-1]
+    return token
+
+
+def _singularize_phrase(text: str) -> str:
+    singularized = [_singularize_token(token) for token in text.split()]
+    return " ".join(token for token in singularized if token)
+
+
+def normalize_ingredient(raw_ingredient: str) -> NormalizedIngredient:
+    """Normalize a single ingredient deterministically and map to canonical dataset."""
+
+    lowered = raw_ingredient.strip().lower()
+    no_punct = _remove_punctuation(lowered)
+    no_descriptors = _remove_descriptors(no_punct)
+    normalized_space = MULTISPACE_PATTERN.sub(" ", no_descriptors).strip()
+    singularized = _singularize_phrase(normalized_space)
+
+    lookup_phrase = MULTISPACE_PATTERN.sub(" ", singularized).strip()
+    if not lookup_phrase:
+        return NormalizedIngredient(
+            raw=raw_ingredient,
+            normalized="",
+            canonical_name=None,
+            canonical_id=None,
         )
-        return spacy.blank("en")
 
+    index = _load_canonical_index()
+    match = index.by_phrase.get(lookup_phrase)
+    if match is None:
+        return NormalizedIngredient(
+            raw=raw_ingredient,
+            normalized=lookup_phrase,
+            canonical_name=None,
+            canonical_id=None,
+        )
 
-def _strip_quantities_units(text: str) -> str:
-    without_quantities = QUANTITY_PATTERN.sub(" ", text)
-    tokens = without_quantities.split()
-    filtered = [token for token in tokens if token not in UNITS]
-    return " ".join(filtered)
-
-
-def _lemmatize_text(text: str) -> str:
-    nlp = _get_nlp()
-    doc = nlp(text)
-    lemmas: list[str] = []
-    for token in doc:
-        lemma = token.lemma_.strip().lower() if token.lemma_ else token.text.lower()
-        if lemma and lemma != "-pron-":
-            lemmas.append(lemma)
-    return " ".join(lemmas)
-
-
-def _normalize_single(raw_ingredient: str) -> str:
-    lower = raw_ingredient.lower().strip()
-    no_punct = PUNCT_PATTERN.sub(" ", lower)
-    stripped = _strip_quantities_units(no_punct)
-    collapsed = MULTISPACE_PATTERN.sub(" ", stripped).strip()
-    return _lemmatize_text(collapsed)
-
-
-def _fuzzy_match(candidate: str, vocab: Iterable[str]) -> str | None:
-    candidate_tokens = set(candidate.split())
-
-    # Prefer vocab entries that contain all candidate tokens as full words
-    # (e.g., "chicken" -> "chicken breast") before fuzzy fallback.
-    token_superset_matches: list[str] = []
-    for item in vocab:
-        item_tokens = set(item.split())
-        if candidate_tokens and candidate_tokens.issubset(item_tokens):
-            token_superset_matches.append(item)
-
-    if token_superset_matches:
-        # Pick the most specific short phrase that still contains the token(s).
-        token_superset_matches.sort(key=lambda item: (len(item.split()), len(item)))
-        return token_superset_matches[0]
-
-    match = process.extractOne(candidate, vocab, scorer=fuzz.ratio)
-    if not match:
-        return None
-
-    best_match, score, _ = match
-    if score < FUZZY_THRESHOLD:
-        return None
-    return best_match
+    return NormalizedIngredient(
+        raw=raw_ingredient,
+        normalized=lookup_phrase,
+        canonical_name=match.canonical_name,
+        canonical_id=match.canonical_id,
+    )
 
 
 def with_default_pantry_ingredients(ingredients: list[str]) -> list[str]:
@@ -145,26 +228,23 @@ def with_default_pantry_ingredients(ingredients: list[str]) -> list[str]:
 
 
 def normalize_ingredients(ingredients: list[str]) -> list[str]:
-    """Normalize user ingredient strings into standardized names."""
+    """Normalize ingredient strings and return canonical names or deterministic fallback."""
 
     if not ingredients:
         return []
 
-    vocab = _load_vocab()
-    normalized: list[str] = []
+    normalized_values: list[str] = []
 
     for raw in ingredients:
-        cleaned = _normalize_single(raw)
-        if not cleaned:
+        normalized = normalize_ingredient(raw)
+        if not normalized.normalized:
             LOGGER.warning("Failed to normalize ingredient due to empty tokenization: %s", raw)
             continue
 
-        matched = _fuzzy_match(cleaned, vocab)
-        if matched is None:
-            LOGGER.warning("No fuzzy vocabulary match for ingredient: %s", raw)
-            normalized.append(cleaned)
-            continue
+        normalized_values.append(normalized.canonical_name or normalized.normalized)
 
-        normalized.append(matched)
-
-    return normalized
+    # Deduplicate after normalization while preserving stable input order.
+    deduped: dict[str, str] = {}
+    for item in normalized_values:
+        deduped.setdefault(item, item)
+    return list(deduped.values())

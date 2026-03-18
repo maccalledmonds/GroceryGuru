@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pantrypal.app.models import load_recipes
-from pantrypal.app.utils.scoring import recommend_recipes
+from pantrypal.app.utils.scoring import _compute_recipe_score, recommend_recipes
 
 
 RECIPES = load_recipes()
@@ -48,3 +48,15 @@ def test_recommend_prioritizes_core_ingredients_over_spices() -> None:
 
     assert results
     assert results[0]["title"] == "Baked Salmon and Asparagus"
+
+
+def test_compute_recipe_score_uses_overlap_over_total_required_with_penalty() -> None:
+    target = next(recipe for recipe in RECIPES if recipe.title == "Spinach Feta Omelette")
+
+    metrics = _compute_recipe_score(target, ["egg", "spinach"])
+
+    # Recipe has 6 canonical ingredients in fixture; overlap with 2 gives base 2/6.
+    assert metrics["exact_match_count"] == 2
+    assert abs(float(metrics["coverage"]) - (2 / 6)) < 1e-6
+    # Missing count 4 -> penalty 0.20, so score is base - penalty.
+    assert abs(float(metrics["score"]) - ((2 / 6) - 0.20)) < 1e-6

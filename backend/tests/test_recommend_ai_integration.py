@@ -8,9 +8,10 @@ from backend.main import app
 
 
 class _FakeHybridRecommender:
-    def recommend_recipes(self, user_ingredients, top_k):
+    def recommend_recipes(self, user_ingredients, top_k, filters=None):
         _ = user_ingredients
         _ = top_k
+        _ = filters
         return type(
             "_FakeHybridResult",
             (),
@@ -44,6 +45,27 @@ class _FakeHybridRecommender:
         )()
 
 
+class _CaptureHybridRecommender:
+    def __init__(self) -> None:
+        self.last_filters = None
+
+    def recommend_recipes(self, user_ingredients, top_k, filters=None):
+        _ = user_ingredients
+        _ = top_k
+        self.last_filters = filters
+        return type(
+            "_FakeHybridResult",
+            (),
+            {
+                "normalized_ingredients": ["egg"],
+                "on_hand_recipes": [],
+                "related_recipes": [],
+                "used_fallback": False,
+                "fallback_reason": None,
+            },
+        )()
+
+
 def test_recommend_ai_endpoint_contract() -> None:
     with TestClient(app) as client:
         app.state.hybrid_recommender = _FakeHybridRecommender()
@@ -71,3 +93,20 @@ def test_recommend_ai_endpoint_contract() -> None:
         assert "title" in first
         assert "ingredients" in first
         assert "score" in first
+
+
+def test_recommend_endpoint_propagates_filters_to_hybrid_engine() -> None:
+    with TestClient(app) as client:
+        fake = _CaptureHybridRecommender()
+        app.state.hybrid_recommender = fake
+        app.state.ai_config_error = None
+
+        payload = {
+            "ingredients": ["egg", "spinach"],
+            "filters": ["vegan"],
+            "top_k": 3,
+        }
+        response = client.post("/api/recommend", json=payload)
+
+    assert response.status_code == 200
+    assert fake.last_filters == ["vegan"]

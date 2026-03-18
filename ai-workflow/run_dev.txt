@@ -1,0 +1,18 @@
+Read agent_log.md, implementation.md, and implementation_details.md.
+
+If reviewer feedback exists:
+- Address ALL feedback for the current phase
+
+Else:
+- Implement the next phase
+
+Rules:
+- Work only ONE phase at a time
+- STOP after completion
+
+Append to agent_log.md:
+- Phase
+- Summary
+- Files changed
+- Assumptions
+- Any uncertainties

@@ -23,10 +23,18 @@ LOGGER = logging.getLogger(__name__)
 _WORD_PATTERN = re.compile(r"[a-z0-9]+")
 _MAX_ATTEMPTS_MULTIPLIER = 4
 _MIN_NOVELTY_SCORE = 0.45
+_FORM_CHANGE_RULES: dict[str, tuple[str, ...]] = {
+    "rice": ("wrapper", "wrappers", "dough", "pastry", "dumpling skin", "spring roll"),
+    "pasta": ("dough", "pastry", "wrapper", "wrappers", "spring roll"),
+}
 
 
 class LLMRecipeEngineError(RuntimeError):
     """Raised when the Groq generation flow fails."""
+
+
+class IngredientFormIntegrityError(LLMRecipeEngineError):
+    """Raised when the model transforms ingredients into disallowed forms."""
 
 
 class GeneratedRecipePayload(BaseModel):
@@ -133,6 +141,31 @@ def _extract_json_object(raw_text: str) -> str:
     return raw_text[start : end + 1]
 
 
+def _validate_ingredient_form_integrity(recipe: dict[str, Any], user_ingredients: list[str]) -> None:
+    """Block recipes that reinterpret core ingredients into unrelated base products."""
+
+    user_text = " ".join(user_ingredients).lower()
+    recipe_text = " ".join(
+        [
+            str(recipe.get("title", "")),
+            *[str(item) for item in recipe.get("ingredients", [])],
+            *[str(step) for step in recipe.get("instructions", [])],
+        ]
+    ).lower()
+
+    violations: list[str] = []
+    for base_ingredient, blocked_terms in _FORM_CHANGE_RULES.items():
+        if base_ingredient not in user_text:
+            continue
+        for term in blocked_terms:
+            if term in recipe_text and term not in user_text:
+                violations.append(f"{base_ingredient}->{term}")
+
+    if violations:
+        joined = ", ".join(sorted(set(violations)))
+        raise IngredientFormIntegrityError(f"Recipe changed ingredient form unexpectedly ({joined})")
+
+
 class LLMRecipeEngine:
     """Encapsulates Groq client lifecycle and recipe JSON generation."""
 
@@ -176,7 +209,18 @@ class LLMRecipeEngine:
             try:
                 parsed = json.loads(_extract_json_object(content))
                 payload = GeneratedRecipePayload.model_validate(parsed)
-                return payload.model_dump()
+                recipe = payload.model_dump()
+                _validate_ingredient_form_integrity(recipe, cleaned)
+                return recipe
+            except IngredientFormIntegrityError as exc:
+                LOGGER.warning(
+                    "Rejected LLM recipe on attempt %d/%d due to ingredient form policy: %s",
+                    attempt,
+                    max_attempts,
+                    exc,
+                )
+                if attempt >= max_attempts:
+                    raise LLMRecipeEngineError("Failed to generate recipe that preserves ingredient form") from exc
             except (json.JSONDecodeError, ValidationError, LLMRecipeEngineError) as exc:
                 LOGGER.warning("Invalid LLM JSON payload on attempt %d/%d: %s", attempt, max_attempts, exc)
                 if attempt >= max_attempts:
@@ -263,12 +307,14 @@ class LLMRecipeEngine:
         return (
             "User ingredients:\n"
             f"{ingredients_text}\n\n"
-            "Generate a recipe using as many of these ingredients as possible.\n"
+            "Your job is to generate SIMPLE, QUICK, and PRACTICAL recipes using the user's available ingredients.\n"
             "The recipe must be meaningfully different in dish style, flavor profile, or cooking method "
             "from other likely options.\n\n"
             "Requirements:\n"
             "- minimize additional ingredients\n"
             "- maximize diversity from previously generated options\n"
+            "- do not reinterpret a provided ingredient into a different base product "
+            "(e.g., rice into wrappers/dough, pasta into dough) unless that transformed product is explicitly provided\n"
             "- provide ingredient list\n"
             "- provide step-by-step instructions\n"
             "- return JSON\n\n"

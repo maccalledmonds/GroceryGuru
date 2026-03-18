@@ -10,7 +10,7 @@ from typing import Final
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 RECIPES_PATH = DATA_DIR / "recipes.json"
-INGREDIENT_VOCAB_PATH = DATA_DIR / "ingredients_vocab.json"
+CANONICAL_INGREDIENTS_PATH = DATA_DIR / "canonical_ingredients.json"
 NUTRITION_CACHE_PATH = DATA_DIR / "nutrition_cache.json"
 
 USDA_API_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"

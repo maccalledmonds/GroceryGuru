@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from types import MethodType
 
-from pantrypal.app.utils.llm_engine import LLMRecipeEngine, _recipe_similarity
+from pantrypal.app.utils.llm_engine import (
+    LLMRecipeEngine,
+    LLMRecipeEngineError,
+    _recipe_similarity,
+    _validate_ingredient_form_integrity,
+)
 
 
 def _build_engine_with_stubbed_generator(recipes: list[dict[str, object]]) -> LLMRecipeEngine:
@@ -93,3 +98,31 @@ def test_generate_recipes_passes_prior_candidates_for_diversity_prompting() -> N
     assert len(generated) == 3
     assert avoid_lengths[0] == 0
     assert max(avoid_lengths) >= 1
+
+
+def test_validate_ingredient_form_integrity_rejects_reinterpretation() -> None:
+    recipe = {
+        "type": "generated",
+        "title": "Rice Wrapper Bites",
+        "ingredients": ["rice", "cabbage"],
+        "instructions": ["Blend rice into dough", "Shape spring roll wrappers"],
+        "missing_ingredients": [],
+    }
+
+    try:
+        _validate_ingredient_form_integrity(recipe, user_ingredients=["rice", "cabbage"])
+        assert False, "Expected LLMRecipeEngineError"
+    except LLMRecipeEngineError as exc:
+        assert "rice->wrapper" in str(exc) or "rice->dough" in str(exc)
+
+
+def test_validate_ingredient_form_integrity_allows_explicit_transformed_item() -> None:
+    recipe = {
+        "type": "generated",
+        "title": "Spring Roll Bowl",
+        "ingredients": ["rice", "spring roll wrappers", "vegetables"],
+        "instructions": ["Cook rice", "Serve with cut wrappers"],
+        "missing_ingredients": [],
+    }
+
+    _validate_ingredient_form_integrity(recipe, user_ingredients=["rice", "spring roll wrappers", "vegetables"])

@@ -48,3 +48,39 @@ def test_hybrid_engine_falls_back_to_database() -> None:
     assert result.used_fallback is True
     assert result.fallback_reason == "llm_generation_failed"
     assert result.related_recipes or result.on_hand_recipes
+
+
+class _TaggedAndUntaggedLLMEngine:
+    def generate_recipes(self, user_ingredients: list[str], count: int = 5):
+        _ = count
+        return [
+            {
+                "type": "generated",
+                "title": "Vegan Bowl",
+                "ingredients": list(user_ingredients),
+                "instructions": ["Mix"],
+                "missing_ingredients": [],
+                "diet_tags": ["vegan"],
+            },
+            {
+                "type": "generated",
+                "title": "Unlabeled Bowl",
+                "ingredients": list(user_ingredients),
+                "instructions": ["Mix"],
+                "missing_ingredients": [],
+            },
+        ]
+
+
+def test_hybrid_engine_filters_generated_results_by_diet_tags() -> None:
+    engine = HybridRecommendationEngine(llm_engine=_TaggedAndUntaggedLLMEngine())
+
+    result = engine.recommend_recipes(
+        user_ingredients=["eggs", "spinach"],
+        top_k=3,
+        filters=["vegan"],
+    )
+
+    assert result.on_hand_recipes
+    assert len(result.on_hand_recipes) == 1
+    assert result.on_hand_recipes[0]["title"] == "Vegan Bowl"

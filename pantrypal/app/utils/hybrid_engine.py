@@ -34,7 +34,12 @@ class HybridRecommendationEngine:
     def __init__(self, llm_engine: LLMRecipeEngine | None = None) -> None:
         self.llm_engine = llm_engine
 
-    def recommend_recipes(self, user_ingredients: list[str], top_k: int = 5) -> HybridRecommendationResult:
+    def recommend_recipes(
+        self,
+        user_ingredients: list[str],
+        top_k: int = 5,
+        filters: list[str] | None = None,
+    ) -> HybridRecommendationResult:
         cleaned = [item.strip() for item in user_ingredients if item and item.strip()]
         if not cleaned:
             raise ValueError("ingredients list must not be empty")
@@ -49,7 +54,12 @@ class HybridRecommendationEngine:
         generated_recipes: list[dict[str, Any]] = []
 
         with ThreadPoolExecutor(max_workers=2) as executor:
-            db_future = executor.submit(search_recipes, normalized, max(top_k * 2, top_k))
+            db_future = executor.submit(
+                search_recipes,
+                normalized,
+                max(top_k * 2, top_k),
+                filters,
+            )
             llm_future = executor.submit(self._safe_generate_many, normalized, on_hand_target)
 
             database_results = db_future.result()
@@ -61,6 +71,7 @@ class HybridRecommendationEngine:
             generated_recipes=generated_recipes,
             top_k=top_k,
             on_hand_target=on_hand_target,
+            filters=filters,
         )
 
         return HybridRecommendationResult(
