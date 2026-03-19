@@ -36,7 +36,7 @@ from pantrypal.app.utils.llm_engine import LLMRecipeEngine, LLMRecipeEngineError
 # ---------------------------------------------------------------------------
 
 # Load local backend/.env for development; existing shell env vars win.
-load_dotenv(Path(__file__).resolve().parent / ".env", override=False)
+load_dotenv(Path(__file__).resolve().parent.parent / "env" / ".env", override=False)
 
 
 def _initialize_hybrid_services(app: FastAPI) -> None:
