@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+import weave
 
 from pantrypal.app.config import DEFAULT_TOP_K, SUPPORTED_FILTERS
 from pantrypal.app.config import (
@@ -37,7 +38,7 @@ from pantrypal.app.utils.llm_engine import LLMRecipeEngine, LLMRecipeEngineError
 
 # Load local backend/.env for development; existing shell env vars win.
 load_dotenv(Path(__file__).resolve().parent.parent / "env" / ".env", override=False)
-
+weave.init("GroceryGuru")
 
 def _initialize_hybrid_services(app: FastAPI) -> None:
     """Initialize and cache hybrid recommendation dependencies."""
@@ -192,7 +193,7 @@ def get_filters() -> FiltersResponse:
     """Return the list of supported dietary filter keys."""
     return FiltersResponse(filters=sorted(SUPPORTED_FILTERS))
 
-
+@weave.op()
 @app.post("/api/recommend", response_model=RecommendResponse, tags=["recommend"])
 def recommend(body: RecommendRequest) -> RecommendResponse:
     """

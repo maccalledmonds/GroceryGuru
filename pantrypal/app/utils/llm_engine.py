@@ -10,6 +10,7 @@ import os
 import random
 import re
 from typing import Any, Literal
+import weave
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -187,6 +188,7 @@ class LLMRecipeEngine:
         except Exception as exc:  # pragma: no cover - network/runtime dependent
             raise LLMRecipeEngineError(f"Failed to initialize Groq client: {exc}") from exc
 
+    @weave.op()
     def generate_recipe(
         self,
         user_ingredients: list[str],
@@ -228,6 +230,7 @@ class LLMRecipeEngine:
 
         raise LLMRecipeEngineError("Exhausted LLM retry attempts")
 
+    @weave.op()
     def generate_recipes(self, user_ingredients: list[str], count: int = 5) -> list[dict[str, Any]]:
         """Generate approximately ``count`` unique recipes from user ingredients.
 
@@ -257,6 +260,7 @@ class LLMRecipeEngine:
 
         return _select_diverse_recipes(candidate_pool, user_ingredients=base_ingredients, target=target)
 
+    @weave.op()
     def _generate_raw(self, prompt: str) -> str:
         messages = [
             {
@@ -290,6 +294,7 @@ class LLMRecipeEngine:
         return content
 
     @staticmethod
+    @weave.op()
     def _build_prompt(user_ingredients: list[str], avoid_recipes: list[dict[str, Any]]) -> str:
         ingredients_text = ", ".join(user_ingredients)
         avoid_text = ""

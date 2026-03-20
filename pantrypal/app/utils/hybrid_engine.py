@@ -11,6 +11,7 @@ from .database_engine import search_recipes
 from .llm_engine import LLMRecipeEngine, LLMRecipeEngineError
 from .normalization import normalize_ingredients, with_default_pantry_ingredients
 from .ranking import rank_and_partition
+import weave
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class HybridRecommendationEngine:
     def __init__(self, llm_engine: LLMRecipeEngine | None = None) -> None:
         self.llm_engine = llm_engine
 
+    @weave.op()
     def recommend_recipes(
         self,
         user_ingredients: list[str],
@@ -82,6 +84,7 @@ class HybridRecommendationEngine:
             fallback_reason=fallback_reason,
         )
 
+    @weave.op()
     def _safe_generate_many(
         self,
         normalized_ingredients: list[str],
