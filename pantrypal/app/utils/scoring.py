@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..config import (
+    HIGH_IMPORTANCE_INGREDIENT_KEYWORDS,
+    HIGH_IMPORTANCE_WEIGHT,
+    LOW_IMPORTANCE_INGREDIENT_KEYWORDS,
+    LOW_IMPORTANCE_WEIGHT,
+    NORMAL_IMPORTANCE_WEIGHT,
+)
 from ..models import Recipe, recipe_to_dict
 from .normalization import normalize_ingredient
 
@@ -17,6 +24,8 @@ def _matches_filter(recipe: Recipe, filters: list[str] | None) -> bool:
 
 _MISSING_PENALTY_PER_INGREDIENT = 0.05
 _MAX_MISSING_PENALTY = 0.25
+_HIGH_IMPORTANCE_KEYWORDS = tuple(keyword.lower() for keyword in HIGH_IMPORTANCE_INGREDIENT_KEYWORDS)
+_LOW_IMPORTANCE_KEYWORDS = tuple(keyword.lower() for keyword in LOW_IMPORTANCE_INGREDIENT_KEYWORDS)
 
 
 def _canonicalize_recipe_ingredients(recipe: Recipe) -> set[str]:
@@ -41,7 +50,19 @@ def _compute_recipe_score(recipe: Recipe, user_ingredients: list[str]) -> dict[s
     recipe_total = len(recipe_set)
     missing_count = max(0, recipe_total - overlap)
 
-    base_score = overlap / recipe_total if recipe_total else 0.0
+    weighted_overlap = sum(_ingredient_weight(ingredient) for ingredient in matched_set)
+    weighted_total = sum(_ingredient_weight(ingredient) for ingredient in recipe_set)
+    weighted_user_total = sum(_ingredient_weight(ingredient) for ingredient in user_set)
+
+    recipe_coverage = weighted_overlap / weighted_total if weighted_total else 0.0
+    user_coverage = weighted_overlap / weighted_user_total if weighted_user_total else 0.0
+    base_score = (recipe_coverage + user_coverage) / 2.0
+
+    core_query_terms = {ingredient for ingredient in user_set if _ingredient_weight(ingredient) >= HIGH_IMPORTANCE_WEIGHT}
+    if len(core_query_terms) >= 2:
+        core_overlap = len(matched_set.intersection(core_query_terms))
+        core_coverage = core_overlap / len(core_query_terms)
+        base_score *= core_coverage
     missing_penalty = min(_MAX_MISSING_PENALTY, _MISSING_PENALTY_PER_INGREDIENT * missing_count)
     score = max(0.0, min(1.0, base_score - missing_penalty))
 
@@ -52,6 +73,18 @@ def _compute_recipe_score(recipe: Recipe, user_ingredients: list[str]) -> dict[s
         "missing_count": missing_count,
         "score": score,
     }
+
+
+def _ingredient_weight(ingredient: str) -> float:
+    value = ingredient.strip().lower()
+    if not value:
+        return NORMAL_IMPORTANCE_WEIGHT
+
+    if any(keyword in value for keyword in _LOW_IMPORTANCE_KEYWORDS):
+        return LOW_IMPORTANCE_WEIGHT
+    if any(keyword in value for keyword in _HIGH_IMPORTANCE_KEYWORDS):
+        return HIGH_IMPORTANCE_WEIGHT
+    return NORMAL_IMPORTANCE_WEIGHT
 
 
 def recommend_recipes(

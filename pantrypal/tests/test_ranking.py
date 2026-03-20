@@ -86,3 +86,22 @@ def test_generated_score_penalizes_missing_ingredients() -> None:
     assert ranked["on_hand_recipes"]
     # Base coverage is 1.0 (2/2); missing penalty is 0.08.
     assert abs(float(ranked["on_hand_recipes"][0]["score"]) - 0.92) < 1e-6
+
+
+def test_database_score_ignores_low_importance_missing_ingredients() -> None:
+    ranked = rank_and_partition(
+        user_ingredients=["chicken", "rice", "salt", "black pepper", "water"],
+        database_results=[
+            {
+                "type": "database",
+                "title": "Chicken Rice Bowl",
+                "ingredients": ["chicken", "rice", "salt", "black pepper", "water"],
+                "missing_ingredients": ["salt", "black pepper", "water"],
+                "match_score": 0.8,
+            }
+        ],
+        generated_recipes=[],
+    )
+
+    assert ranked["related_recipes"]
+    assert abs(float(ranked["related_recipes"][0]["score"]) - 0.8) < 1e-6

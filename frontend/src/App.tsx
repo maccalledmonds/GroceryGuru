@@ -29,6 +29,21 @@ const SPICE_OPTIONS = [
 
 const AUTO_INCLUDED_PANTRY = ["salt", "black pepper", "water"] as const;
 
+const ESSENTIAL_SPICES = [
+  "black pepper",
+  "cumin",
+  "paprika",
+  "garlic powder",
+  "oregano",
+  "coriander",
+  "turmeric",
+  "chili powder",
+  "cayenne pepper",
+  "cinnamon",
+  "red pepper flakes",
+  "salt",
+] as const;
+
 // Skeleton card for the loading state
 function SkeletonCard() {
   return (
@@ -89,8 +104,14 @@ export default function App() {
     recommend({ ingredients: requestIngredients, filters: selectedFilters, top_k: topK });
   }
 
+  function addEssentialSpices() {
+    const merged = Array.from(new Set([...ingredients, ...ESSENTIAL_SPICES]));
+    setIngredients(merged);
+  }
+
   const isLoading = status === "loading";
   const hasAnyIngredient = ingredients.length > 0 || selectedSpices.length > 0;
+  const hasAllEssentialSpices = ESSENTIAL_SPICES.every((spice) => ingredients.includes(spice));
 
   return (
     <div className="min-h-dvh flex flex-col">
@@ -137,6 +158,16 @@ export default function App() {
                   onChange={setIngredients}
                   disabled={isLoading}
                 />
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={addEssentialSpices}
+                    disabled={isLoading || hasAllEssentialSpices}
+                    className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-sm transition-colors hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Add essential spices
+                  </button>
+                </div>
                 <p className="mt-1.5 text-xs text-gray-400">
                   Press <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">Enter</kbd> or{" "}
                   <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">,</kbd> after each ingredient

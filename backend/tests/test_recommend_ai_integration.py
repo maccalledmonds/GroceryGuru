@@ -22,6 +22,8 @@ class _FakeHybridRecommender:
                         "type": "generated",
                         "title": "Spinach Egg Skillet",
                         "ingredients": ["egg", "spinach", "feta cheese"],
+                        "ingredients_normalized": ["egg", "spinach", "feta cheese"],
+                        "servings": None,
                         "instructions": ["Whisk eggs", "Saute spinach", "Cook together"],
                         "missing_ingredients": [],
                         "score": 0.93,
@@ -33,6 +35,8 @@ class _FakeHybridRecommender:
                         "type": "database",
                         "title": "Spinach Feta Omelette",
                         "ingredients": ["egg", "spinach", "feta cheese", "olive oil"],
+                        "ingredients_normalized": ["egg", "spinach", "feta cheese", "olive oil"],
+                        "servings": 2,
                         "instructions": "Beat eggs and cook with spinach.",
                         "missing_ingredients": ["olive oil"],
                         "match_score": 0.75,
@@ -92,7 +96,29 @@ def test_recommend_ai_endpoint_contract() -> None:
         assert "type" in first
         assert "title" in first
         assert "ingredients" in first
+        assert "ingredients_normalized" in first
+        assert "servings" in first
         assert "score" in first
+
+
+def test_recommend_endpoint_includes_servings_for_database_items() -> None:
+    with TestClient(app) as client:
+        app.state.hybrid_recommender = _FakeHybridRecommender()
+        app.state.ai_config_error = None
+
+        payload = {
+            "ingredients": ["egg", "spinach", "feta cheese"],
+            "filters": [],
+            "top_k": 3,
+        }
+        response = client.post("/api/recommend", json=payload)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["related_recipes"]
+    related_first = body["related_recipes"][0]
+    assert related_first["type"] == "database"
+    assert related_first["servings"] == 2
 
 
 def test_recommend_endpoint_propagates_filters_to_hybrid_engine() -> None:

@@ -87,3 +87,56 @@ def test_deduplicate_after_normalization() -> None:
 
     assert normalized
     assert normalized == ["tomato"]
+
+
+def test_normalize_strips_measurement_and_descriptors_for_zest() -> None:
+    result = normalize_ingredient("1 teaspoon finely grated lemon zest")
+
+    assert result.normalized == "lemon zest"
+
+
+def test_normalize_strips_leading_fillers() -> None:
+    result = normalize_ingredient("to beef tenderloin steak")
+
+    assert result.normalized == "beef tenderloin steak"
+
+
+def test_normalize_ingredients_skips_special_equipment_lines() -> None:
+    normalized = normalize_ingredients([
+        "Special equipment: blender",
+        "egg",
+        "Equipment: baking tray",
+    ])
+
+    assert "egg" in normalized
+    assert all("equipment" not in item for item in normalized)
+
+
+def test_normalize_essential_spice_aliases_and_misspellings() -> None:
+    normalized = normalize_ingredients(
+        [
+            "black pepper",
+            "cumin",
+            "paprika",
+            "garlic powder",
+            "oregeno",
+            "coriander",
+            "tumeric",
+            "chili powder/cayenne",
+            "cinnamon",
+            "red pepper flakes",
+            "salt",
+        ]
+    )
+
+    assert "black pepper" in normalized
+    assert "cumin" in normalized
+    assert "paprika" in normalized
+    assert "garlic powder" in normalized
+    assert "oregano" in normalized
+    assert "coriander" in normalized
+    assert "turmeric" in normalized
+    assert "chili powder" in normalized
+    assert "cinnamon" in normalized
+    assert "red pepper flakes" in normalized
+    assert "salt" in normalized

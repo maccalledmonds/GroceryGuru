@@ -119,6 +119,8 @@ class RecipeResult(BaseModel):
     type: str
     title: str
     ingredients: list[str]
+    ingredients_normalized: list[str] = Field(default_factory=list)
+    servings: int | None = None
     missing_ingredients: list[str] = Field(default_factory=list)
     instructions: list[str] | str | None = None
     score: float
@@ -170,6 +172,8 @@ def _to_recipe_response_item(raw_recipe: dict[str, Any]) -> RecipeResult:
         type=raw_recipe["type"],
         title=raw_recipe["title"],
         ingredients=raw_recipe.get("ingredients", []),
+        ingredients_normalized=raw_recipe.get("ingredients_normalized", []),
+        servings=raw_recipe.get("servings"),
         missing_ingredients=raw_recipe.get("missing_ingredients", []),
         instructions=raw_recipe.get("instructions"),
         score=raw_recipe["score"],

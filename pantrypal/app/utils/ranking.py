@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..config import DEFAULT_PANTRY_INGREDIENTS, LOW_IMPORTANCE_INGREDIENT_KEYWORDS
 from .normalization import normalize_ingredient
 
 ANIMAL_INGREDIENT_HINTS = {
@@ -84,10 +85,25 @@ HIGH_PROTEIN_HINTS = {
     "peanut butter",
 }
 
+_LOW_IMPORTANCE_KEYWORDS = tuple(keyword.lower() for keyword in LOW_IMPORTANCE_INGREDIENT_KEYWORDS)
+_DEFAULT_PANTRY = {item.lower() for item in DEFAULT_PANTRY_INGREDIENTS}
+
 
 def _score_database_item(item: dict[str, Any]) -> float:
     match_score = float(item.get("match_score", 0.0))
-    missing_count = len(item.get("missing_ingredients", []))
+    missing_ingredients = [
+        str(ingredient).strip().lower()
+        for ingredient in item.get("missing_ingredients", [])
+        if str(ingredient).strip()
+    ]
+    missing_count = len(
+        [
+            ingredient
+            for ingredient in missing_ingredients
+            if ingredient not in _DEFAULT_PANTRY
+            and not any(keyword in ingredient for keyword in _LOW_IMPORTANCE_KEYWORDS)
+        ]
+    )
     penalty = min(0.25, 0.05 * missing_count)
     return max(0.0, min(1.0, match_score - penalty))
 

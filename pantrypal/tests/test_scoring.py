@@ -55,8 +55,9 @@ def test_compute_recipe_score_uses_overlap_over_total_required_with_penalty() ->
 
     metrics = _compute_recipe_score(target, ["egg", "spinach"])
 
-    # Recipe has 6 canonical ingredients in fixture; overlap with 2 gives base 2/6.
+    # Weighted overlap still requires exact ingredient matches for the numerator.
     assert metrics["exact_match_count"] == 2
-    assert abs(float(metrics["coverage"]) - (2 / 6)) < 1e-6
-    # Missing count 4 -> penalty 0.20, so score is base - penalty.
-    assert abs(float(metrics["score"]) - ((2 / 6) - 0.20)) < 1e-6
+    # Coverage is weighted, so it should be higher than the unweighted 2/6 baseline.
+    assert float(metrics["coverage"]) > (2 / 6)
+    # Missing count 4 -> penalty 0.20, so score is coverage - penalty.
+    assert abs(float(metrics["score"]) - (float(metrics["coverage"]) - 0.20)) < 1e-6

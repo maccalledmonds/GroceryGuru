@@ -62,7 +62,7 @@
     { "id": "ing_0053", "canonical_name": "basil", "aliases": ["fresh basil", "basil leaves"] },
     { "id": "ing_0054", "canonical_name": "mint", "aliases": ["fresh mint", "mint leaves"] },
     { "id": "ing_0055", "canonical_name": "dill", "aliases": ["fresh dill", "dill weed"] },
-    { "id": "ing_0056", "canonical_name": "oregano", "aliases": ["dried oregano", "oregano leaves"] },
+    { "id": "ing_0056", "canonical_name": "oregano", "aliases": ["dried oregano", "oregano leaves", "oregeno"] },
     { "id": "ing_0057", "canonical_name": "thyme", "aliases": ["dried thyme", "thyme leaves"] },
     { "id": "ing_0058", "canonical_name": "rosemary", "aliases": ["fresh rosemary", "rosemary sprig"] },
     { "id": "ing_0059", "canonical_name": "apple", "aliases": ["apples", "green apple", "red apple"] },
@@ -95,15 +95,15 @@
     { "id": "ing_0086", "canonical_name": "butter", "aliases": ["unsalted butter", "salted butter"] },
     { "id": "ing_0087", "canonical_name": "ghee", "aliases": ["clarified butter", "desi ghee"] },
     { "id": "ing_0088", "canonical_name": "lard", "aliases": ["pork fat", "rendered lard"] },
-    { "id": "ing_0089", "canonical_name": "salt", "aliases": ["table salt", "fine salt", "kosher salt"] },
+    { "id": "ing_0089", "canonical_name": "salt", "aliases": ["table salt", "fine salt", "kosher salt", "sea salt"] },
     { "id": "ing_0090", "canonical_name": "black pepper", "aliases": ["ground black pepper", "black peppercorn"] },
     { "id": "ing_0091", "canonical_name": "paprika", "aliases": ["sweet paprika", "smoked paprika"] },
     { "id": "ing_0092", "canonical_name": "cumin", "aliases": ["ground cumin", "cumin powder"] },
     { "id": "ing_0093", "canonical_name": "coriander", "aliases": ["ground coriander", "coriander powder"] },
-    { "id": "ing_0094", "canonical_name": "turmeric", "aliases": ["ground turmeric", "turmeric powder"] },
+    { "id": "ing_0094", "canonical_name": "turmeric", "aliases": ["ground turmeric", "turmeric powder", "tumeric", "ground tumeric", "tumeric powder"] },
     { "id": "ing_0095", "canonical_name": "cinnamon", "aliases": ["ground cinnamon", "cinnamon powder"] },
     { "id": "ing_0096", "canonical_name": "nutmeg", "aliases": ["ground nutmeg", "nutmeg powder"] },
-    { "id": "ing_0097", "canonical_name": "chili powder", "aliases": ["ground chili", "red chili powder"] },
+    { "id": "ing_0097", "canonical_name": "chili powder", "aliases": ["ground chili", "red chili powder", "chili powder cayenne"] },
     { "id": "ing_0098", "canonical_name": "cayenne pepper", "aliases": ["cayenne", "ground cayenne"] },
     { "id": "ing_0099", "canonical_name": "oregano seasoning", "aliases": ["italian oregano seasoning", "pizza seasoning"] },
     { "id": "ing_0100", "canonical_name": "soy sauce", "aliases": ["light soy sauce", "dark soy sauce"] },
@@ -127,6 +127,8 @@
     { "id": "ing_0118", "canonical_name": "stock", "aliases": ["chicken stock", "vegetable stock", "beef stock"] },
     { "id": "ing_0119", "canonical_name": "honey", "aliases": ["raw honey", "wildflower honey"] },
     { "id": "ing_0120", "canonical_name": "maple syrup", "aliases": ["pure maple syrup", "grade a maple syrup"] },
-    { "id": "ing_0121", "canonical_name": "ice cream", "aliases": ["vanilla ice cream", "chocolate ice cream"] }
+    { "id": "ing_0121", "canonical_name": "ice cream", "aliases": ["vanilla ice cream", "chocolate ice cream"] },
+    { "id": "ing_0122", "canonical_name": "garlic powder", "aliases": ["granulated garlic", "garlic granules"] },
+    { "id": "ing_0123", "canonical_name": "red pepper flakes", "aliases": ["red pepper flake", "crushed red pepper", "crushed red pepper flakes", "chili flakes"] }
   ]
 }

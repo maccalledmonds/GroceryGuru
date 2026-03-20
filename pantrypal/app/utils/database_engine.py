@@ -7,8 +7,15 @@ from functools import lru_cache
 import logging
 from typing import Any
 
+from ..config import (
+    HIGH_IMPORTANCE_INGREDIENT_KEYWORDS,
+    HIGH_IMPORTANCE_WEIGHT,
+    LOW_IMPORTANCE_INGREDIENT_KEYWORDS,
+    LOW_IMPORTANCE_WEIGHT,
+    NORMAL_IMPORTANCE_WEIGHT,
+)
 from ..models import load_recipes
-from .normalization import normalize_ingredient
+from .normalization import is_special_equipment_phrase, normalize_ingredient
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +40,9 @@ _CANONICAL_INTEGRITY_METRICS: dict[str, int] = {
     "unknown_values": 0,
 }
 
+_HIGH_IMPORTANCE_KEYWORDS = tuple(keyword.lower() for keyword in HIGH_IMPORTANCE_INGREDIENT_KEYWORDS)
+_LOW_IMPORTANCE_KEYWORDS = tuple(keyword.lower() for keyword in LOW_IMPORTANCE_INGREDIENT_KEYWORDS)
+
 
 @dataclass(frozen=True, slots=True)
 class _RecipeSearchRecord:
@@ -40,9 +50,11 @@ class _RecipeSearchRecord:
 
     id: int
     title: str
-    ingredients: list[str]
+    display_ingredients: list[str]
+    normalized_ingredients: list[str]
     instructions: str
     diet_tags: list[str]
+    servings: int | None
     ingredient_set: set[str]
 
 
@@ -52,9 +64,13 @@ def _canonicalize_recipe_ingredients(recipe_ingredients: list[str]) -> list[str]
     canonicalized: list[str] = []
     seen: set[str] = set()
     for ingredient in recipe_ingredients:
+        if is_special_equipment_phrase(ingredient):
+            continue
         mapped = normalize_ingredient(ingredient)
         value = mapped.canonical_name or mapped.normalized
         if not value:
+            continue
+        if is_special_equipment_phrase(value):
             continue
         if value in seen:
             continue
@@ -78,10 +94,14 @@ def _validated_recipe_normalized_ingredients(
         value = ingredient.strip().lower()
         if not value:
             continue
+        if is_special_equipment_phrase(value):
+            continue
 
         mapped = normalize_ingredient(value)
         canonical_value = mapped.canonical_name or mapped.normalized
         if not canonical_value:
+            continue
+        if is_special_equipment_phrase(canonical_value):
             continue
 
         if mapped.canonical_name is None:
@@ -156,9 +176,11 @@ def _recipe_search_index() -> tuple[_RecipeSearchRecord, ...]:
             _RecipeSearchRecord(
                 id=recipe.id,
                 title=recipe.title,
-                ingredients=list(ingredient_source),
+                display_ingredients=list(recipe.ingredients),
+                normalized_ingredients=list(ingredient_source),
                 instructions=recipe.instructions,
                 diet_tags=list(recipe.diet_tags),
+                servings=recipe.servings,
                 ingredient_set=ingredient_set,
             )
         )
@@ -185,24 +207,88 @@ def get_canonical_integrity_metrics() -> dict[str, int]:
 
 def _score_recipe(record: _RecipeSearchRecord, user_set: set[str]) -> dict[str, Any] | None:
     overlap_set = user_set.intersection(record.ingredient_set)
-    overlap = len(overlap_set)
-    total_recipe_ingredients = len(record.ingredient_set)
+    if not overlap_set or not record.ingredient_set:
+        return None
 
-    if overlap == 0 or total_recipe_ingredients == 0:
+    weighted_overlap = sum(_ingredient_weight(ingredient) for ingredient in overlap_set)
+    weighted_total = sum(_ingredient_weight(ingredient) for ingredient in record.ingredient_set)
+    weighted_user_total = sum(_ingredient_weight(ingredient) for ingredient in user_set)
+    if weighted_total <= 0.0:
+        return None
+    if weighted_user_total <= 0.0:
         return None
 
     missing_ingredients = sorted(record.ingredient_set.difference(user_set))
-    match_score = overlap / total_recipe_ingredients
+    recipe_coverage = weighted_overlap / weighted_total
+    user_coverage = weighted_overlap / weighted_user_total
+    match_score = (recipe_coverage + user_coverage) / 2.0
+
+    core_query_terms = {ingredient for ingredient in user_set if _ingredient_weight(ingredient) >= HIGH_IMPORTANCE_WEIGHT}
+    if len(core_query_terms) >= 2:
+        core_overlap = len(overlap_set.intersection(core_query_terms))
+        core_coverage = core_overlap / len(core_query_terms)
+        match_score *= core_coverage
 
     return {
         "id": record.id,
         "type": "database",
         "title": record.title,
-        "ingredients": record.ingredients,
+        "ingredients": record.display_ingredients,
+        "ingredients_normalized": record.normalized_ingredients,
+        "servings": record.servings,
         "instructions": record.instructions,
         "missing_ingredients": missing_ingredients,
         "match_score": round(match_score, 4),
     }
+
+
+def _ingredient_weight(ingredient: str) -> float:
+    value = ingredient.strip().lower()
+    if not value:
+        return NORMAL_IMPORTANCE_WEIGHT
+
+    if any(keyword in value for keyword in _LOW_IMPORTANCE_KEYWORDS):
+        return LOW_IMPORTANCE_WEIGHT
+    if any(keyword in value for keyword in _HIGH_IMPORTANCE_KEYWORDS):
+        return HIGH_IMPORTANCE_WEIGHT
+    return NORMAL_IMPORTANCE_WEIGHT
+
+
+def _recipe_similarity(left: dict[str, Any], right: dict[str, Any]) -> float:
+    left_set = set(left.get("ingredients", []))
+    right_set = set(right.get("ingredients", []))
+    if not left_set or not right_set:
+        return 0.0
+
+    intersection = len(left_set.intersection(right_set))
+    union = len(left_set.union(right_set))
+    if union == 0:
+        return 0.0
+    return intersection / union
+
+
+def _select_diverse_recipes(
+    ranked: list[dict[str, Any]],
+    top_k: int,
+    similarity_threshold: float = 0.60,
+) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    for candidate in ranked:
+        if any(_recipe_similarity(candidate, existing) >= similarity_threshold for existing in selected):
+            continue
+        selected.append(candidate)
+        if len(selected) >= max(1, top_k):
+            break
+
+    if len(selected) < max(1, top_k):
+        for candidate in ranked:
+            if candidate in selected:
+                continue
+            selected.append(candidate)
+            if len(selected) >= max(1, top_k):
+                break
+
+    return selected
 
 
 def search_recipes(
@@ -245,4 +331,4 @@ def search_recipes(
         ),
         reverse=True,
     )
-    return ranked[: max(1, top_k)]
+    return _select_diverse_recipes(ranked, top_k)

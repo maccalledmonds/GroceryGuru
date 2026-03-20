@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { RecipeResult } from "../api/client";
 
+function isSpecialEquipmentPhrase(value: string): boolean {
+  const lowered = value.trim().toLowerCase();
+  return /\bspecial\s+equipment\b|^equipment\b/.test(lowered);
+}
+
 function ScoreBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   const color =
@@ -144,11 +149,15 @@ function toInstructionSteps(instructions: RecipeResult["instructions"]): string[
 
 export function RecipeCard({ recipe, rank, servingMultiplier }: Props) {
   const [open, setOpen] = useState(false);
-  const missingIngredients = recipe.missing_ingredients ?? [];
-  const instructionSteps = toInstructionSteps(recipe.instructions);
-  const scaledIngredients = recipe.ingredients.map((ingredient) =>
-    scaleIngredientText(ingredient, servingMultiplier),
+  const isDatabaseRecipe = recipe.type === "database";
+  const missingIngredients = (recipe.missing_ingredients ?? []).filter(
+    (item) => !isSpecialEquipmentPhrase(item),
   );
+  const instructionSteps = toInstructionSteps(recipe.instructions);
+  const ingredientsForDisplay = recipe.ingredients;
+  const scaledIngredients = isDatabaseRecipe
+    ? ingredientsForDisplay.map((ingredient) => scaleIngredientText(ingredient, servingMultiplier))
+    : ingredientsForDisplay;
 
   return (
     <article className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
@@ -177,6 +186,11 @@ export function RecipeCard({ recipe, rank, servingMultiplier }: Props) {
             <strong className="text-gray-700">{missingIngredients.length}</strong> missing ingredient
             {missingIngredients.length !== 1 ? "s" : ""}
           </span>
+          {isDatabaseRecipe && recipe.servings != null && (
+            <span>
+              Serves: <strong className="text-gray-700">{recipe.servings}</strong>
+            </span>
+          )}
           {recipe.match_score != null && <span>Match score: <strong className="text-gray-700">{recipe.match_score.toFixed(2)}</strong></span>}
         </div>
 
@@ -190,7 +204,7 @@ export function RecipeCard({ recipe, rank, servingMultiplier }: Props) {
         {/* Ingredients list */}
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Ingredients</p>
-          {servingMultiplier !== 1 && (
+          {isDatabaseRecipe && servingMultiplier !== 1 && (
             <p className="mb-1.5 text-xs text-gray-500">
               Amounts adjusted for <span className="font-semibold">{servingMultiplier}x servings</span>
             </p>

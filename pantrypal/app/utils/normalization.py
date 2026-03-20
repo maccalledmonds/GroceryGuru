@@ -15,20 +15,82 @@ LOGGER = logging.getLogger(__name__)
 DESCRIPTORS: frozenset[str] = frozenset(
     {
         "fresh",
+        "freshly",
         "chopped",
+        "minced",
         "diced",
         "sliced",
+        "grated",
+        "finely",
+        "coarsely",
+        "roughly",
+        "thinly",
+        "thickly",
+        "peeled",
+        "crushed",
+        "whole",
+        "halved",
         "organic",
         "large",
         "small",
         "extra",
         "virgin",
+        "light",
     }
 )
+
+LEADING_FILLER_TOKENS: frozenset[str] = frozenset({"to", "for", "of", "and"})
+UNIT_TOKENS: frozenset[str] = frozenset(
+    {
+        "cup",
+        "cups",
+        "tablespoon",
+        "tablespoons",
+        "tbsp",
+        "teaspoon",
+        "teaspoons",
+        "tsp",
+        "ounce",
+        "ounces",
+        "oz",
+        "pound",
+        "pounds",
+        "lb",
+        "lbs",
+        "gram",
+        "grams",
+        "kilogram",
+        "kilograms",
+        "kg",
+        "milliliter",
+        "milliliters",
+        "ml",
+        "liter",
+        "liters",
+        "l",
+        "pint",
+        "pints",
+        "quart",
+        "quarts",
+        "gallon",
+        "gallons",
+        "inch",
+        "inches",
+        "piece",
+        "pieces",
+        "sprig",
+        "sprigs",
+        "stalk",
+        "stalks",
+    }
+)
+
+NUMERIC_TOKEN_PATTERN = re.compile(r"^\d+(?:[./-]\d+)*$")
 
 MULTISPACE_PATTERN = re.compile(r"\s+")
 PUNCT_TO_SPACE_PATTERN = re.compile(r"[-/,.():;&]")
 OTHER_PUNCT_PATTERN = re.compile(r"[^a-z0-9\s]")
+SPECIAL_EQUIPMENT_PATTERN = re.compile(r"\bspecial\s+equipment\b|^equipment\b")
 
 IRREGULAR_SINGULARS = {
     "tomatoes": "tomato",
@@ -155,6 +217,23 @@ def _remove_descriptors(text: str) -> str:
     return " ".join(kept)
 
 
+def _remove_measurement_tokens(text: str) -> str:
+    tokens = text.split()
+    kept = [
+        token
+        for token in tokens
+        if not NUMERIC_TOKEN_PATTERN.match(token) and token not in UNIT_TOKENS
+    ]
+    return " ".join(kept)
+
+
+def _strip_leading_fillers(text: str) -> str:
+    tokens = text.split()
+    while tokens and tokens[0] in LEADING_FILLER_TOKENS:
+        tokens = tokens[1:]
+    return " ".join(tokens)
+
+
 def _singularize_token(token: str) -> str:
     if not token:
         return token
@@ -179,8 +258,10 @@ def normalize_ingredient(raw_ingredient: str) -> NormalizedIngredient:
 
     lowered = raw_ingredient.strip().lower()
     no_punct = _remove_punctuation(lowered)
-    no_descriptors = _remove_descriptors(no_punct)
-    normalized_space = MULTISPACE_PATTERN.sub(" ", no_descriptors).strip()
+    no_measurements = _remove_measurement_tokens(no_punct)
+    no_descriptors = _remove_descriptors(no_measurements)
+    without_fillers = _strip_leading_fillers(no_descriptors)
+    normalized_space = MULTISPACE_PATTERN.sub(" ", without_fillers).strip()
     singularized = _singularize_phrase(normalized_space)
 
     lookup_phrase = MULTISPACE_PATTERN.sub(" ", singularized).strip()
@@ -236,6 +317,8 @@ def normalize_ingredients(ingredients: list[str]) -> list[str]:
     normalized_values: list[str] = []
 
     for raw in ingredients:
+        if is_special_equipment_phrase(raw):
+            continue
         normalized = normalize_ingredient(raw)
         if not normalized.normalized:
             LOGGER.warning("Failed to normalize ingredient due to empty tokenization: %s", raw)
@@ -248,3 +331,12 @@ def normalize_ingredients(ingredients: list[str]) -> list[str]:
     for item in normalized_values:
         deduped.setdefault(item, item)
     return list(deduped.values())
+
+
+def is_special_equipment_phrase(value: str) -> bool:
+    """Return True when an ingredient line represents equipment metadata."""
+
+    lowered = value.strip().lower()
+    if not lowered:
+        return False
+    return SPECIAL_EQUIPMENT_PATTERN.search(lowered) is not None

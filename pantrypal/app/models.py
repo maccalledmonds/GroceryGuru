@@ -31,6 +31,7 @@ class Recipe:
     diet_tags: list[str]
     nutrition: Nutrition
     ingredients_normalized: list[str]
+    servings: int | None = None
 
 
 def recipe_from_dict(raw: dict[str, Any]) -> Recipe:
@@ -52,6 +53,7 @@ def recipe_from_dict(raw: dict[str, Any]) -> Recipe:
         diet_tags=[str(tag) for tag in raw.get("diet_tags", [])],
         nutrition=nutrition,
         ingredients_normalized=[str(item) for item in raw.get("ingredients_normalized", [])],
+        servings=int(raw["servings"]) if raw.get("servings") is not None else None,
     )
 
 
@@ -62,8 +64,10 @@ def recipe_to_dict(recipe: Recipe) -> dict[str, Any]:
         "id": recipe.id,
         "title": recipe.title,
         "ingredients": recipe.ingredients,
+        "ingredients_normalized": recipe.ingredients_normalized,
         "instructions": recipe.instructions,
         "diet_tags": recipe.diet_tags,
+        "servings": recipe.servings,
         "nutrition": {
             "calories": recipe.nutrition.calories,
             "protein": recipe.nutrition.protein,

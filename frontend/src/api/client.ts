@@ -14,6 +14,8 @@ export interface RecipeResult {
   score: number;
   match_score?: number | null;
   ingredients: string[];
+  ingredients_normalized?: string[];
+  servings?: number | null;
   instructions?: string[] | string | null;
   missing_ingredients?: string[];
 }
