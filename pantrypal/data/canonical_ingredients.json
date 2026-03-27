@@ -46,7 +46,7 @@
     { "id": "ing_0037", "canonical_name": "potato", "aliases": ["potatoes", "russet potato", "yukon gold potato"] },
     { "id": "ing_0038", "canonical_name": "sweet potato", "aliases": ["sweet potatoes", "orange sweet potato"] },
     { "id": "ing_0039", "canonical_name": "green bean", "aliases": ["green beans", "string bean"] },
-    { "id": "ing_0040", "canonical_name": "pea", "aliases": ["peas", "green peas"] },
+    { "id": "ing_0040", "canonical_name": "pea", "aliases": ["peas", "green peas", "sugar peas"] },
     { "id": "ing_0041", "canonical_name": "corn", "aliases": ["corn kernels", "sweet corn"] },
     { "id": "ing_0042", "canonical_name": "celery", "aliases": ["celery stalk", "celery stalks"] },
     { "id": "ing_0043", "canonical_name": "asparagus", "aliases": ["asparagus spears", "fresh asparagus"] },

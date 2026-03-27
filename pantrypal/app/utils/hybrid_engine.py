@@ -15,7 +15,7 @@ import weave
 
 LOGGER = logging.getLogger(__name__)
 
-ON_HAND_LLM_TARGET = 5
+ON_HAND_LLM_TARGET = 10
 
 
 @dataclass(slots=True)
@@ -46,6 +46,8 @@ class HybridRecommendationEngine:
         if not cleaned:
             raise ValueError("ingredients list must not be empty")
 
+        # Keep DB scoring deterministic, but send Groq the user's cleaned raw phrases.
+        llm_user_ingredients = list(cleaned)
         normalized = normalize_ingredients(with_default_pantry_ingredients(cleaned))
         if not normalized:
             raise ValueError("No valid ingredients were recognized")
@@ -62,7 +64,7 @@ class HybridRecommendationEngine:
                 max(top_k * 2, top_k),
                 filters,
             )
-            llm_future = executor.submit(self._safe_generate_many, normalized, on_hand_target)
+            llm_future = executor.submit(self._safe_generate_many, llm_user_ingredients, on_hand_target)
 
             database_results = db_future.result()
             generated_recipes, fallback_reason = llm_future.result()

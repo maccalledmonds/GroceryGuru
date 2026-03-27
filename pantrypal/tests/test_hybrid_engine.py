@@ -36,7 +36,7 @@ def test_hybrid_engine_returns_partitioned_results() -> None:
     assert isinstance(result.on_hand_recipes, list)
     assert isinstance(result.related_recipes, list)
     assert result.on_hand_recipes
-    assert len(result.on_hand_recipes) == 5
+    assert len(result.on_hand_recipes) == 10
     assert {item["type"] for item in result.on_hand_recipes} == {"generated"}
 
 
@@ -72,6 +72,16 @@ class _TaggedAndUntaggedLLMEngine:
         ]
 
 
+class _CaptureInputLLMEngine:
+    def __init__(self) -> None:
+        self.seen_user_ingredients: list[str] = []
+
+    def generate_recipes(self, user_ingredients: list[str], count: int = 5):
+        _ = count
+        self.seen_user_ingredients = list(user_ingredients)
+        return []
+
+
 def test_hybrid_engine_filters_generated_results_by_diet_tags() -> None:
     engine = HybridRecommendationEngine(llm_engine=_TaggedAndUntaggedLLMEngine())
 
@@ -84,3 +94,13 @@ def test_hybrid_engine_filters_generated_results_by_diet_tags() -> None:
     assert result.on_hand_recipes
     assert len(result.on_hand_recipes) == 1
     assert result.on_hand_recipes[0]["title"] == "Vegan Bowl"
+
+
+def test_hybrid_engine_sends_cleaned_raw_input_to_llm() -> None:
+    llm_engine = _CaptureInputLLMEngine()
+    engine = HybridRecommendationEngine(llm_engine=llm_engine)
+
+    result = engine.recommend_recipes(user_ingredients=[" Eggs  ", "spinach"], top_k=3)
+
+    assert llm_engine.seen_user_ingredients == ["Eggs", "spinach"]
+    assert "egg" in result.normalized_ingredients

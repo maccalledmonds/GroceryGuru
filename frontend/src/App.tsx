@@ -172,9 +172,6 @@ export default function App() {
                   Press <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">Enter</kbd> or{" "}
                   <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">,</kbd> after each ingredient
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Always included automatically: salt, black pepper, and water.
-                </p>
               </div>
 
               {/* Mobile filters inline */}

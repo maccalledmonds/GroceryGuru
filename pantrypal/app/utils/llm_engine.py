@@ -231,7 +231,7 @@ class LLMRecipeEngine:
         raise LLMRecipeEngineError("Exhausted LLM retry attempts")
 
     @weave.op()
-    def generate_recipes(self, user_ingredients: list[str], count: int = 5) -> list[dict[str, Any]]:
+    def generate_recipes(self, user_ingredients: list[str], count: int = 10) -> list[dict[str, Any]]:
         """Generate approximately ``count`` unique recipes from user ingredients.
 
         The method tries a few extra attempts to handle occasional duplicate titles.
@@ -312,12 +312,9 @@ class LLMRecipeEngine:
         return (
             "User ingredients:\n"
             f"{ingredients_text}\n\n"
-            "Your job is to generate SIMPLE, QUICK, and PRACTICAL recipes using the user's available ingredients.\n"
-            "The recipe must be meaningfully different in dish style, flavor profile, or cooking method "
-            "from other likely options.\n\n"
+            "Your job is to generate tasty recipes using the user's available ingredients.\n"
             "Requirements:\n"
             "- minimize additional ingredients\n"
-            "- maximize diversity from previously generated options\n"
             "- do not reinterpret a provided ingredient into a different base product "
             "(e.g., rice into wrappers/dough, pasta into dough) unless that transformed product is explicitly provided\n"
             "- provide ingredient list\n"
@@ -350,7 +347,7 @@ def generate_recipe(user_ingredients: list[str]) -> dict[str, Any]:
     return _default_engine().generate_recipe(user_ingredients)
 
 
-def generate_recipes(user_ingredients: list[str], count: int = 5) -> list[dict[str, Any]]:
+def generate_recipes(user_ingredients: list[str], count: int = 10) -> list[dict[str, Any]]:
     """Generate multiple recipes using a cached default Groq engine."""
 
     return _default_engine().generate_recipes(user_ingredients, count=count)
