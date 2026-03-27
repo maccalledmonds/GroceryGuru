@@ -14,6 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 DESCRIPTORS: frozenset[str] = frozenset(
     {
+        # Existing preparation style words
         "fresh",
         "freshly",
         "chopped",
@@ -36,6 +37,55 @@ DESCRIPTORS: frozenset[str] = frozenset(
         "extra",
         "virgin",
         "light",
+        # Prep state modifiers
+        "boneless",
+        "skinless",
+        "deboned",
+        "deveined",
+        "shelled",
+        "pitted",
+        "seeded",
+        "cored",
+        "trimmed",
+        "marinated",
+        "sinew",
+        "removed",
+        # Storage and preservation format
+        "canned",
+        "frozen",
+        "thawed",
+        "jarred",
+        "dried",
+        "smoked",
+        "sweetened",
+        "unsweetened",
+        "unsalted",
+        "condensed",
+        "evaporated",
+        # Cooking and processing state
+        "cooked",
+        "uncooked",
+        "raw",
+        "precooked",
+        "boiled",
+        "steamed",
+        "roasted",
+        "toasted",
+        "shredded",
+        "crumbled",
+        "ground",
+        # Quality and grade modifiers
+        "lean",
+        "reduced",
+        "low",
+        # Anatomical cut tokens (single words)
+        "loin",
+        "shoulder",
+        "chuck",
+        "flank",
+        "belly",
+        "center",
+        "sirloin",
     }
 )
 
@@ -275,6 +325,26 @@ def normalize_ingredient(raw_ingredient: str) -> NormalizedIngredient:
 
     index = _load_canonical_index()
     match = index.by_phrase.get(lookup_phrase)
+
+    # Sub-phrase fallback: for phrases with 3+ tokens, progressively drop leading
+    # then trailing tokens (up to 3 drops each) until a canonical match is found.
+    # The guard of >= 3 tokens prevents false positives on 2-token names like
+    # "sweet potato" or "bell pepper" which are already exact-matched above.
+    if match is None:
+        tokens = lookup_phrase.split()
+        if len(tokens) >= 3:
+            for i in range(1, min(len(tokens) - 1, 4)):
+                candidate = " ".join(tokens[i:])
+                match = index.by_phrase.get(candidate)
+                if match:
+                    break
+            if match is None:
+                for i in range(1, min(len(tokens) - 1, 4)):
+                    candidate = " ".join(tokens[:-i])
+                    match = index.by_phrase.get(candidate)
+                    if match:
+                        break
+
     if match is None:
         return NormalizedIngredient(
             raw=raw_ingredient,

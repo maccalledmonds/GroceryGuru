@@ -20,17 +20,48 @@ from .normalization import is_special_equipment_phrase, normalize_ingredient
 LOGGER = logging.getLogger(__name__)
 
 _NON_MEAL_TITLE_HINTS = {
+    # Sauces and dressings (existing)
     "sauce",
     "dressing",
     "dip",
     "marinade",
     "condiment",
+    # Beverages (existing)
     "drink",
     "smoothie",
     "juice",
     "cocktail",
     "tea",
     "coffee",
+    # Spice and seasoning blends
+    "rub",
+    "blend",
+    "seasoning",
+    # Stocks and broths
+    "stock",
+    # Preserved and pickled components
+    "pickle",
+    "pickled",
+    "preserved",
+    "relish",
+    "chutney",
+    # Spreads and pastes
+    "spread",
+    "pesto",
+    # Emulsified sauces and dressings
+    "vinaigrette",
+    "aioli",
+    # Sweet components and toppings
+    "syrup",
+    "glaze",
+    "frosting",
+    "icing",
+    "ganache",
+    "compote",
+    "jelly",
+    # Doughs and bases
+    "dough",
+    "roux",
 }
 
 _CANONICAL_INTEGRITY_METRICS: dict[str, int] = {

@@ -182,6 +182,92 @@ def test_search_recipes_diversifies_similar_candidates(monkeypatch) -> None:
     assert "Egg Noodle Bowl" in titles
 
 
+def test_search_recipes_excludes_expanded_non_meal_titles(monkeypatch) -> None:
+    """Dry rubs, stocks, pickled components, blends, syrups, and vinaigrettes are filtered."""
+    non_meal_records = (
+        _RecipeSearchRecord(
+            id=1,
+            title="Cumin Crust Rub",
+            display_ingredients=["cumin", "paprika", "salt", "garlic", "black pepper"],
+            normalized_ingredients=["cumin", "paprika", "salt", "garlic", "black pepper"],
+            instructions="mix",
+            diet_tags=["vegan"],
+            servings=None,
+            ingredient_set={"cumin", "paprika", "salt", "garlic", "black pepper"},
+        ),
+        _RecipeSearchRecord(
+            id=2,
+            title="Homemade Chicken Stock",
+            display_ingredients=["chicken", "onion", "celery", "carrot", "water"],
+            normalized_ingredients=["chicken", "onion", "celery", "carrot", "water"],
+            instructions="simmer",
+            diet_tags=[],
+            servings=None,
+            ingredient_set={"chicken", "onion", "celery", "carrot", "water"},
+        ),
+        _RecipeSearchRecord(
+            id=3,
+            title="Pickled Red Onions",
+            display_ingredients=["onion", "vinegar", "sugar", "salt", "water"],
+            normalized_ingredients=["onion", "vinegar", "sugar", "salt", "water"],
+            instructions="brine",
+            diet_tags=["vegan"],
+            servings=None,
+            ingredient_set={"onion", "vinegar", "sugar", "salt", "water"},
+        ),
+        _RecipeSearchRecord(
+            id=4,
+            title="Tandoori Spice Blend",
+            display_ingredients=["cumin", "paprika", "coriander", "turmeric", "garam masala"],
+            normalized_ingredients=["cumin", "paprika", "coriander", "turmeric", "garam masala"],
+            instructions="mix",
+            diet_tags=["vegan"],
+            servings=None,
+            ingredient_set={"cumin", "paprika", "coriander", "turmeric", "garam masala"},
+        ),
+        _RecipeSearchRecord(
+            id=5,
+            title="Balsamic Vinaigrette",
+            display_ingredients=["balsamic vinegar", "olive oil", "garlic", "mustard"],
+            normalized_ingredients=["balsamic vinegar", "olive oil", "garlic", "mustard"],
+            instructions="whisk",
+            diet_tags=["vegan"],
+            servings=None,
+            ingredient_set={"balsamic vinegar", "olive oil", "garlic", "mustard"},
+        ),
+        _RecipeSearchRecord(
+            id=6,
+            title="Ginger Syrup",
+            display_ingredients=["ginger", "sugar", "water"],
+            normalized_ingredients=["ginger", "sugar", "water"],
+            instructions="simmer",
+            diet_tags=["vegan"],
+            servings=None,
+            ingredient_set={"ginger", "sugar", "water"},
+        ),
+        _RecipeSearchRecord(
+            id=7,
+            title="Chicken and Onion Skillet",
+            display_ingredients=["chicken", "onion", "olive oil", "garlic"],
+            normalized_ingredients=["chicken", "onion", "olive oil", "garlic"],
+            instructions="cook",
+            diet_tags=[],
+            servings=2,
+            ingredient_set={"chicken", "onion", "olive oil", "garlic"},
+        ),
+    )
+
+    monkeypatch.setattr(
+        "pantrypal.app.utils.database_engine._recipe_search_index",
+        lambda: non_meal_records,
+    )
+
+    results = search_recipes(["chicken", "onion", "garlic"], top_k=10)
+
+    assert len(results) == 1
+    assert results[0]["title"] == "Chicken and Onion Skillet"
+
+
 def test_search_recipes_prefers_multi_core_overlap_over_side_only_match(monkeypatch) -> None:
     fake_index = (
         _RecipeSearchRecord(
