@@ -15,9 +15,7 @@ export function IngredientInput({ ingredients, onChange, disabled = false }: Pro
       .split(",")
       .map((s) => s.trim())
       .filter((s) => s.length > 0 && !ingredients.includes(s));
-    if (parts.length > 0) {
-      onChange([...ingredients, ...parts]);
-    }
+    if (parts.length > 0) onChange([...ingredients, ...parts]);
     setDraft("");
   }
 
@@ -30,21 +28,18 @@ export function IngredientInput({ ingredients, onChange, disabled = false }: Pro
     }
   }
 
-  function removeIngredient(index: number) {
-    onChange(ingredients.filter((_, i) => i !== index));
-  }
-
   return (
+    // No outer border — the parent nav bar is the container
     <div
-      className={`flex flex-wrap gap-2 items-center min-h-[3rem] w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-200 ${
-        disabled ? "opacity-60 cursor-not-allowed" : ""
+      className={`flex flex-wrap gap-2 items-center min-h-[2.5rem] ${
+        disabled ? "opacity-60 cursor-not-allowed" : "cursor-text"
       }`}
       onClick={() => inputRef.current?.focus()}
     >
       {ingredients.map((ing, i) => (
         <span
           key={`${ing}-${i}`}
-          className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-800"
+          className="inline-flex items-center gap-1.5 border-2 border-stone-900 rounded-[5px] px-2.5 py-1 text-sm font-medium text-stone-900 leading-none"
         >
           {ing}
           {!disabled && (
@@ -52,9 +47,9 @@ export function IngredientInput({ ingredients, onChange, disabled = false }: Pro
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                removeIngredient(i);
+                onChange(ingredients.filter((_, idx) => idx !== i));
               }}
-              className="ml-0.5 rounded-full hover:bg-brand-200 p-0.5 leading-none focus:outline-none focus:ring-1 focus:ring-brand-400"
+              className="opacity-35 hover:opacity-75 transition-opacity duration-100 leading-none focus:outline-none"
               aria-label={`Remove ${ing}`}
             >
               <svg className="w-3 h-3" viewBox="0 0 12 12" fill="currentColor" aria-hidden>
@@ -73,8 +68,8 @@ export function IngredientInput({ ingredients, onChange, disabled = false }: Pro
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={() => draft && commit(draft)}
-        placeholder={ingredients.length === 0 ? "Type an ingredient and press Enter…" : "Add more…"}
-        className="flex-1 min-w-[160px] bg-transparent outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+        placeholder={ingredients.length === 0 ? "Type an ingredient and press Enter…" : "add more…"}
+        className="flex-1 min-w-[140px] bg-transparent outline-none text-sm text-stone-900 placeholder:text-stone-400 disabled:cursor-not-allowed"
         aria-label="Ingredient input"
       />
     </div>
