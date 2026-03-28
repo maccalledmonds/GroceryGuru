@@ -1,69 +1,18 @@
 import { useEffect, useState } from "react";
 import { api } from "./api/client";
-import { FilterPanel } from "./components/FilterPanel";
 import { IngredientInput } from "./components/IngredientInput";
+import { OptionsPopover } from "./components/OptionsPopover";
 import { RecipeCard } from "./components/RecipeCard";
+import { SkeletonCard } from "./components/SkeletonCard";
 import { useRecommend } from "./hooks/useRecommend";
 
 const SPICE_OPTIONS = [
-  "garlic",
-  "ginger",
-  "turmeric",
-  "basil",
-  "parsley",
-  "cilantro",
-  "vanilla extract",
-  "cinnamon",
-  "nutmeg",
-  "cumin",
-  "paprika",
-  "oregano",
-  "thyme",
-  "rosemary",
-  "dill",
-  "bay leaf",
-  "mustard",
-  "hot sauce",
-  "curry paste",
+  "garlic", "ginger", "turmeric", "basil", "parsley", "cilantro",
+  "vanilla extract", "cinnamon", "nutmeg", "cumin", "paprika", "oregano",
+  "thyme", "rosemary", "dill", "bay leaf", "mustard", "hot sauce", "curry paste",
 ];
 
 const AUTO_INCLUDED_PANTRY = ["salt", "black pepper", "water"] as const;
-
-const ESSENTIAL_SPICES = [
-  "black pepper",
-  "cumin",
-  "paprika",
-  "garlic powder",
-  "oregano",
-  "coriander",
-  "turmeric",
-  "chili powder",
-  "cayenne pepper",
-  "cinnamon",
-  "red pepper flakes",
-  "salt",
-] as const;
-
-// Skeleton card for the loading state
-function SkeletonCard() {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden animate-pulse">
-      <div className="px-5 pt-5 pb-3 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-full bg-gray-200" />
-        <div className="h-5 w-48 rounded bg-gray-200" />
-      </div>
-      <div className="px-5 pb-5 space-y-3">
-        <div className="grid grid-cols-4 gap-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-12 rounded-lg bg-gray-100" />
-          ))}
-        </div>
-        <div className="h-4 w-full rounded bg-gray-100" />
-        <div className="h-4 w-2/3 rounded bg-gray-100" />
-      </div>
-    </div>
-  );
-}
 
 export default function App() {
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -72,6 +21,7 @@ export default function App() {
   const [topK, setTopK] = useState(5);
   const [servingMultiplier, setServingMultiplier] = useState(1);
   const [availableFilters, setAvailableFilters] = useState<string[]>([]);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const {
     status,
@@ -84,16 +34,17 @@ export default function App() {
     recommend,
   } = useRecommend();
 
-  // Fetch available filters from the API once on mount
   useEffect(() => {
     api
       .getFilters()
       .then((data) => setAvailableFilters(data.filters))
       .catch(() => {
-        // Fall back to known filters if the API is unreachable at startup
         setAvailableFilters(["gluten_free", "high_protein", "vegan", "vegetarian"]);
       });
   }, []);
+
+  const isLoading = status === "loading";
+  const hasAnyIngredient = ingredients.length > 0 || selectedSpices.length > 0;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -101,240 +52,271 @@ export default function App() {
       new Set([...ingredients, ...selectedSpices, ...AUTO_INCLUDED_PANTRY]),
     );
     if (requestIngredients.length === 0) return;
+    setOptionsOpen(false);
     recommend({ ingredients: requestIngredients, filters: selectedFilters, top_k: topK });
   }
 
-  function addEssentialSpices() {
-    const merged = Array.from(new Set([...ingredients, ...ESSENTIAL_SPICES]));
-    setIngredients(merged);
-  }
-
-  const isLoading = status === "loading";
-  const hasAnyIngredient = ingredients.length > 0 || selectedSpices.length > 0;
-  const hasAllEssentialSpices = ESSENTIAL_SPICES.every((spice) => ingredients.includes(spice));
-
   return (
     <div className="min-h-dvh flex flex-col">
-      {/* Top nav */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-3">
-          <span className="text-2xl leading-none" aria-hidden>🥕</span>
-          <span className="text-lg font-bold text-gray-900 tracking-tight">PantryPal</span>
-          <span className="ml-auto text-xs text-gray-400 hidden sm:block">
-            Recipe recommendations from your pantry
-          </span>
-        </div>
-      </header>
 
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-1 gap-8 py-8">
-        {/* Sidebar */}
-        <aside className="hidden lg:block w-56 flex-none">
-          <div className="sticky top-24 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <FilterPanel
+      {/* ── Sticky nav + popover ── */}
+      <div className="sticky top-0 z-40">
+        <form onSubmit={handleSubmit}>
+          <header className="bg-white border-b border-black/[0.07] px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-3 sm:gap-4">
+            {/* Logo */}
+            <span className="text-[17px] font-bold text-stone-900 tracking-[-0.035em] whitespace-nowrap flex-shrink-0">
+              GroceryGuru
+            </span>
+
+            {/* Divider */}
+            <div className="hidden sm:block w-px h-5 bg-black/[0.1] flex-shrink-0" />
+
+            {/* Ingredient input (takes remaining space) */}
+            <div className="flex-1 min-w-0">
+              <IngredientInput
+                ingredients={ingredients}
+                onChange={setIngredients}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Options toggle */}
+            <button
+              type="button"
+              onClick={() => setOptionsOpen((o) => !o)}
+              disabled={isLoading}
+              className={`flex-shrink-0 hidden sm:inline-flex items-center gap-1.5 border rounded-[7px] px-3.5 h-[38px] text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
+                optionsOpen
+                  ? "border-brand-500 text-brand-500 bg-brand-500/[0.05]"
+                  : "border-black/[0.12] text-stone-500 hover:border-black/[0.22] hover:text-stone-900"
+              }`}
+              aria-expanded={optionsOpen}
+              aria-controls="options-popover"
+            >
+              Options
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-150 ${optionsOpen ? "rotate-180" : ""}`}
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path fillRule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+              </svg>
+            </button>
+
+            {/* Find Recipes CTA */}
+            <button
+              type="submit"
+              disabled={isLoading || !hasAnyIngredient}
+              className="flex-shrink-0 inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white rounded-[7px] px-4 sm:px-5 h-[38px] text-sm font-semibold transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  <span className="hidden sm:inline">Finding…</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+                    <circle cx="6.5" cy="6.5" r="5" />
+                    <path d="M11 11l2.5 2.5" />
+                  </svg>
+                  <span className="hidden sm:inline">Find Recipes</span>
+                  <span className="sm:hidden">Find</span>
+                </>
+              )}
+            </button>
+          </header>
+        </form>
+
+        {/* Options popover — conditionally rendered below the nav */}
+        {optionsOpen && (
+          <div id="options-popover">
+            <OptionsPopover
               availableFilters={availableFilters}
               selectedFilters={selectedFilters}
+              onFiltersChange={setSelectedFilters}
               spiceOptions={SPICE_OPTIONS}
               selectedSpices={selectedSpices}
-              topK={topK}
-              onFiltersChange={setSelectedFilters}
               onSpicesChange={setSelectedSpices}
+              topK={topK}
               onTopKChange={setTopK}
+              onClose={() => setOptionsOpen(false)}
               disabled={isLoading}
             />
           </div>
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 min-w-0 space-y-6">
-          {/* Input form */}
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  What's in your pantry?
-                </label>
-                <IngredientInput
-                  ingredients={ingredients}
-                  onChange={setIngredients}
-                  disabled={isLoading}
-                />
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={addEssentialSpices}
-                    disabled={isLoading || hasAllEssentialSpices}
-                    className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-sm transition-colors hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Add essential spices
-                  </button>
-                </div>
-                <p className="mt-1.5 text-xs text-gray-400">
-                  Press <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">Enter</kbd> or{" "}
-                  <kbd className="rounded bg-gray-100 px-1 py-0.5 text-gray-600 font-mono">,</kbd> after each ingredient
-                </p>
-              </div>
-
-              {/* Mobile filters inline */}
-              <div className="lg:hidden">
-                <FilterPanel
-                  availableFilters={availableFilters}
-                  selectedFilters={selectedFilters}
-                  spiceOptions={SPICE_OPTIONS}
-                  selectedSpices={selectedSpices}
-                  topK={topK}
-                  onFiltersChange={setSelectedFilters}
-                  onSpicesChange={setSelectedSpices}
-                  onTopKChange={setTopK}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Normalized ingredients feedback */}
-              {status === "success" && normalizedIngredients.length > 0 && (
-                <p className="text-xs text-gray-400">
-                  Recognized as:{" "}
-                  <span className="text-gray-600 font-medium">{normalizedIngredients.join(", ")}</span>
-                </p>
-              )}
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Serving size</label>
-                <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1">
-                  {[1, 2, 4].map((multiplier) => (
-                    <button
-                      key={multiplier}
-                      type="button"
-                      onClick={() => setServingMultiplier(multiplier)}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                        servingMultiplier === multiplier
-                          ? "bg-white text-brand-700 shadow-sm"
-                          : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      {multiplier}x
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-gray-400">Ingredient quantities are scaled when numeric amounts are available.</p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading || !hasAnyIngredient}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
-                    Finding recipes…
-                  </>
-                ) : (
-                  <>
-                    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                      <path d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11ZM13 13l-2.5-2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                    </svg>
-                    Recommend Recipes
-                  </>
-                )}
-              </button>
-            </form>
-          </section>
-
-          {/* Error state */}
-          {status === "error" && (
-            <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <strong>Error: </strong>{error}
-            </div>
-          )}
-
-          {/* Loading skeletons */}
-          {isLoading && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {Array.from({ length: topK > 4 ? 4 : topK }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          )}
-
-          {/* Results */}
-          {status === "success" && (onHandRecipes.length > 0 || relatedRecipes.length > 0) && (
-            <section aria-label="Recipe recommendations" className="space-y-6">
-              {usedFallback && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  AI generation was unavailable, so these are database-backed results.
-                  {fallbackReason ? ` Reason: ${fallbackReason}` : ""}
-                </div>
-              )}
-
-              <div>
-                <p className="mb-1 text-sm font-semibold text-gray-700">Cook Now</p>
-                <p className="mb-3 text-xs text-gray-500">Recipes you can make with what you already have.</p>
-                {onHandRecipes.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {onHandRecipes.map((recipe, i) => (
-                      <RecipeCard
-                        key={`${recipe.id ?? recipe.title}-on-hand`}
-                        recipe={recipe}
-                        rank={i + 1}
-                        servingMultiplier={servingMultiplier}
-                        variant="cook-now"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No Cook Now matches yet.</p>
-                )}
-              </div>
-
-              <div>
-                <p className="mb-1 text-sm font-semibold text-gray-700">Almost There</p>
-                <p className="mb-3 text-xs text-gray-500">Recipes close to your pantry list with a few missing items.</p>
-                {relatedRecipes.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {relatedRecipes.map((recipe, i) => (
-                      <RecipeCard
-                        key={`${recipe.id ?? recipe.title}-related`}
-                        recipe={recipe}
-                        rank={i + 1}
-                        servingMultiplier={servingMultiplier}
-                        variant="almost-there"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No Almost There recommendations found.</p>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* Empty state */}
-          {status === "success" && onHandRecipes.length === 0 && relatedRecipes.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
-              <p className="text-4xl mb-3" aria-hidden>🔍</p>
-              <p className="text-sm font-medium text-gray-700">No recipes matched your ingredients and filters.</p>
-              <p className="mt-1 text-sm text-gray-400">Try removing some dietary filters or adding more ingredients.</p>
-            </div>
-          )}
-
-          {/* Idle placeholder */}
-          {status === "idle" && (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
-              <p className="text-5xl mb-4" aria-hidden>🥕</p>
-              <p className="text-base font-medium text-gray-700">Add ingredients to get started</p>
-              <p className="mt-1 text-sm text-gray-400">
-                Enter what you have on hand and we'll find matching recipes.
-              </p>
-            </div>
-          )}
-        </main>
+        )}
       </div>
 
-      <footer className="border-t border-gray-200 py-4 text-center text-xs text-gray-400">
-        PantryPal — Nutrition data from USDA FoodData Central
+      {/* ── Main content ── */}
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+        {/* Error */}
+        {status === "error" && (
+          <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <strong>Error: </strong>{error}
+          </div>
+        )}
+
+        {/* AI fallback notice */}
+        {status === "success" && usedFallback && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            AI generation was unavailable — showing database results.
+            {fallbackReason ? ` Reason: ${fallbackReason}` : ""}
+          </div>
+        )}
+
+        {/* Normalized ingredients feedback */}
+        {status === "success" && normalizedIngredients.length > 0 && (
+          <p className="mb-6 text-xs text-stone-400">
+            Recognized as:{" "}
+            <span className="text-stone-600 font-medium">{normalizedIngredients.join(", ")}</span>
+          </p>
+        )}
+
+        {/* Results */}
+        {status === "success" && (onHandRecipes.length > 0 || relatedRecipes.length > 0) && (
+          <section aria-label="Recipe recommendations">
+
+            {/* Serving size — near results, not in the form */}
+            <div className="mb-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-stone-400 mb-2">
+                Serving size
+              </p>
+              <div className="inline-flex border border-black/[0.12] rounded-lg overflow-hidden">
+                {[1, 2, 4].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setServingMultiplier(m)}
+                    className={`px-5 py-2 text-sm font-medium transition-colors duration-150 ${
+                      servingMultiplier === m
+                        ? "bg-stone-900 text-white"
+                        : "text-stone-500 hover:bg-black/[0.04] hover:text-stone-900"
+                    } [&+button]:border-l [&+button]:border-l-black/[0.08]`}
+                  >
+                    {m}×
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cook Now */}
+            {onHandRecipes.length > 0 && (
+              <div className="mb-9">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-1 h-5 rounded-sm bg-brand-500 flex-shrink-0" />
+                  <span className="text-[15px] font-semibold text-stone-900" style={{ letterSpacing: "-0.015em" }}>
+                    Cook Now
+                  </span>
+                  <span className="text-xs text-stone-400">{onHandRecipes.length} recipe{onHandRecipes.length !== 1 ? "s" : ""}</span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {onHandRecipes.map((recipe, i) => (
+                    <RecipeCard
+                      key={`${recipe.id ?? recipe.title}-on-hand`}
+                      recipe={recipe}
+                      rank={i + 1}
+                      servingMultiplier={servingMultiplier}
+                      variant="cook-now"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Almost There */}
+            {relatedRecipes.length > 0 && (
+              <div className="mb-9">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-1 h-5 rounded-sm bg-stone-300 flex-shrink-0" />
+                  <span className="text-[15px] font-semibold text-stone-900" style={{ letterSpacing: "-0.015em" }}>
+                    Almost There
+                  </span>
+                  <span className="text-xs text-stone-400">{relatedRecipes.length} recipe{relatedRecipes.length !== 1 ? "s" : ""}</span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {relatedRecipes.map((recipe, i) => (
+                    <RecipeCard
+                      key={`${recipe.id ?? recipe.title}-related`}
+                      recipe={recipe}
+                      rank={i + 1}
+                      servingMultiplier={servingMultiplier}
+                      variant="almost-there"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </section>
+        )}
+
+        {/* Empty state — search ran but no results */}
+        {status === "success" && onHandRecipes.length === 0 && relatedRecipes.length === 0 && (
+          <div className="text-center py-24 px-6">
+            <svg
+              className="w-12 h-12 mx-auto mb-5 text-stone-300"
+              viewBox="0 0 48 48"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              aria-hidden
+            >
+              <circle cx="22" cy="22" r="14" />
+              <path d="M32 32l8 8" strokeLinecap="round" />
+              <path d="M16 22h12M22 16v12" strokeLinecap="round" />
+            </svg>
+            <p className="text-[17px] font-semibold text-stone-900 mb-2" style={{ letterSpacing: "-0.02em" }}>
+              No recipes matched
+            </p>
+            <p className="text-sm text-stone-400">
+              Try removing a dietary filter or adding more ingredients.
+            </p>
+          </div>
+        )}
+
+        {/* Loading skeletons */}
+        {isLoading && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: Math.min(topK, 6) }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        )}
+
+        {/* Idle state */}
+        {status === "idle" && (
+          <div className="text-center py-24 px-6">
+            <svg
+              className="w-12 h-12 mx-auto mb-5 opacity-[0.18]"
+              viewBox="0 0 48 48"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              aria-hidden
+            >
+              <rect x="7" y="9" width="34" height="32" rx="4" />
+              <line x1="14" y1="20" x2="34" y2="20" strokeLinecap="round" />
+              <line x1="14" y1="27" x2="27" y2="27" strokeLinecap="round" />
+              <line x1="14" y1="34" x2="22" y2="34" strokeLinecap="round" />
+            </svg>
+            <p className="text-[18px] font-semibold text-stone-900 mb-2" style={{ letterSpacing: "-0.025em" }}>
+              Your pantry, your recipes
+            </p>
+            <p className="text-sm text-stone-400">
+              Add what's in your fridge and we'll find what's for dinner.
+            </p>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-black/[0.06] py-4 text-center text-xs text-stone-400">
+        GroceryGuru — Nutrition data from USDA FoodData Central
       </footer>
     </div>
   );
