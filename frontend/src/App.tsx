@@ -280,6 +280,7 @@ export default function App() {
                         recipe={recipe}
                         rank={i + 1}
                         servingMultiplier={servingMultiplier}
+                        variant="cook-now"
                       />
                     ))}
                   </div>
@@ -299,6 +300,7 @@ export default function App() {
                         recipe={recipe}
                         rank={i + 1}
                         servingMultiplier={servingMultiplier}
+                        variant="almost-there"
                       />
                     ))}
                   </div>

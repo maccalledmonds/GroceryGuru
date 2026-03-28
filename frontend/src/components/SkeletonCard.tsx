@@ -1,6 +1,6 @@
 export function SkeletonCard() {
   return (
-    <div className="bg-white border border-black/[0.07] border-l-4 border-l-black/[0.08] rounded-r-xl p-5">
+    <div aria-hidden="true" className="bg-white border border-black/[0.07] border-l-4 border-l-black/[0.08] rounded-r-xl p-5">
       <div className="flex justify-between items-start gap-3 mb-3">
         <div>
           <div className="h-4 w-36 rounded skeleton-shimmer mb-2" />

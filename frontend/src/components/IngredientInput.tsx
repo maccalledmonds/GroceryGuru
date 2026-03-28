@@ -34,11 +34,11 @@ export function IngredientInput({ ingredients, onChange, disabled = false }: Pro
       className={`flex flex-wrap gap-2 items-center min-h-[2.5rem] ${
         disabled ? "opacity-60 cursor-not-allowed" : "cursor-text"
       }`}
-      onClick={() => inputRef.current?.focus()}
+      onClick={() => { if (!disabled) inputRef.current?.focus(); }}
     >
-      {ingredients.map((ing, i) => (
+      {ingredients.map((ing) => (
         <span
-          key={`${ing}-${i}`}
+          key={ing}
           className="inline-flex items-center gap-1.5 border-2 border-stone-900 rounded-[5px] px-2.5 py-1 text-sm font-medium text-stone-900 leading-none"
         >
           {ing}
@@ -47,7 +47,7 @@ export function IngredientInput({ ingredients, onChange, disabled = false }: Pro
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onChange(ingredients.filter((_, idx) => idx !== i));
+                onChange(ingredients.filter((x) => x !== ing));
               }}
               className="opacity-35 hover:opacity-75 transition-opacity duration-100 leading-none focus:outline-none"
               aria-label={`Remove ${ing}`}

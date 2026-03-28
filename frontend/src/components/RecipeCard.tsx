@@ -98,7 +98,7 @@ interface Props {
   variant: "cook-now" | "almost-there";
 }
 
-export function RecipeCard({ recipe, rank, servingMultiplier, variant }: Props) {
+export function RecipeCard({ recipe, rank: _rank, servingMultiplier, variant }: Props) {
   const [open, setOpen] = useState(false);
   const isDatabaseRecipe = recipe.type === "database";
 
@@ -124,9 +124,6 @@ export function RecipeCard({ recipe, rank, servingMultiplier, variant }: Props) 
     variant === "cook-now"
       ? "border-l-brand-500"
       : "border-l-stone-300";
-
-  // rank is retained in the interface for parent compatibility but not displayed
-  void rank;
 
   return (
     <article

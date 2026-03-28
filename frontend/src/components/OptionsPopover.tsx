@@ -1,3 +1,7 @@
+import { useEffect } from "react";
+
+const MAX_RESULTS = 20;
+
 const FILTER_LABELS: Record<string, string> = {
   vegetarian: "Vegetarian",
   vegan: "Vegan",
@@ -46,8 +50,17 @@ export function OptionsPopover({
     );
   }
 
+  // Close on Escape key
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   // Percentage of slider filled for CSS gradient
-  const sliderPct = ((topK - 1) / (20 - 1)) * 100;
+  const sliderPct = ((topK - 1) / (MAX_RESULTS - 1)) * 100;
 
   return (
     <>
@@ -62,6 +75,7 @@ export function OptionsPopover({
       <div
         className="relative z-40 bg-white border-t-[3px] border-t-brand-500 border-b border-x border-black/[0.08] shadow-popover"
         role="dialog"
+        aria-modal="true"
         aria-label="Search options"
       >
         <div className="mx-auto max-w-7xl px-6 sm:px-8 py-5 flex flex-wrap gap-8 items-start">
@@ -79,6 +93,7 @@ export function OptionsPopover({
                     key={f}
                     type="button"
                     disabled={disabled}
+                    aria-pressed={active}
                     onClick={() => toggleFilter(f)}
                     className={`border rounded-[5px] px-3.5 py-1.5 text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
                       active
@@ -106,6 +121,7 @@ export function OptionsPopover({
                     key={s}
                     type="button"
                     disabled={disabled}
+                    aria-pressed={active}
                     onClick={() => toggleSpice(s)}
                     className={`border rounded-[5px] px-3 py-1.5 text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
                       active
@@ -134,7 +150,7 @@ export function OptionsPopover({
             <input
               type="range"
               min={1}
-              max={20}
+              max={MAX_RESULTS}
               value={topK}
               disabled={disabled}
               onChange={(e) => onTopKChange(Number(e.target.value))}
