@@ -48,11 +48,12 @@ export default function App() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (ingredients.length === 0 && selectedSpices.length === 0) return;
     const requestIngredients = Array.from(
       new Set([...ingredients, ...selectedSpices, ...AUTO_INCLUDED_PANTRY]),
     );
-    if (requestIngredients.length === 0) return;
     setOptionsOpen(false);
+    setServingMultiplier(1);
     recommend({ ingredients: requestIngredients, filters: selectedFilters, top_k: topK });
   }
 
@@ -91,7 +92,6 @@ export default function App() {
                   : "border-black/[0.12] text-stone-500 hover:border-black/[0.22] hover:text-stone-900"
               }`}
               aria-expanded={optionsOpen}
-              aria-controls="options-popover"
             >
               Options
               <svg
@@ -134,7 +134,7 @@ export default function App() {
 
         {/* Options popover — conditionally rendered below the nav */}
         {optionsOpen && (
-          <div id="options-popover">
+          <div>
             <OptionsPopover
               availableFilters={availableFilters}
               selectedFilters={selectedFilters}
