@@ -1,0 +1,111 @@
+<h2>How should the layout be restructured?</h2>
+<p class="subtitle">Three approaches — each handles the spice panel, filters, and flow differently. Amber accent + structural left-border detail applies to all of them.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="focused" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Focused Input — Contextual Controls</h3>
+      <p>The ingredient input is the full-width hero. No sidebar. After you start adding ingredients, a "Refine" strip fades in below the input with dietary filters as pill toggles and spices as clickable chip suggestions — not a checkbox wall. The page stays single-column and calm. Results appear below. Serving size moves onto each recipe card directly.</p>
+      <div style="margin-top:12px; background:#f9f9f9; border-radius:8px; padding:12px; font-family:'Inter',sans-serif; font-size:11px;">
+        <div style="border:2px solid #111; border-radius:4px; padding:8px; margin-bottom:8px; display:flex; gap:6px; flex-wrap:wrap; min-height:32px;">
+          <span style="border:2px solid #111; border-radius:3px; padding:2px 8px; font-weight:700;">chicken</span>
+          <span style="border:2px solid #111; border-radius:3px; padding:2px 8px; font-weight:700;">garlic</span>
+          <span style="color:#aaa;">add ingredient…</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; padding:6px 0; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+          <span style="border:1.5px solid #d97706; color:#d97706; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:600;">+ cumin</span>
+          <span style="border:1.5px solid #ccc; color:#888; border-radius:3px; padding:2px 8px; font-size:10px;">+ paprika</span>
+          <span style="border:1.5px solid #ccc; color:#888; border-radius:3px; padding:2px 8px; font-size:10px;">+ basil</span>
+          <span style="color:#aaa; font-size:10px; align-self:center;">spice suggestions</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <span style="background:#111; color:#fff; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:600;">Vegetarian ✓</span>
+          <span style="border:1.5px solid #ddd; color:#888; border-radius:3px; padding:2px 8px; font-size:10px;">Gluten-free</span>
+          <span style="border:1.5px solid #ddd; color:#888; border-radius:3px; padding:2px 8px; font-size:10px;">High-protein</span>
+        </div>
+      </div>
+      <div style="margin-top:8px; font-size:10px; color:#888;"><strong>Trade-off:</strong> No persistent sidebar means more vertical scrolling on desktop. Simple and very mobile-friendly.</div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="workspace" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Workspace + Results Split</h3>
+      <p>Left panel is a persistent "workspace" — ingredient input at top, then spices as a compact toggle grid (not a scrollable list), then filters. The workspace stays visible while results scroll on the right. The left panel feels like a control surface, the right like a live result stream. Works beautifully on desktop; collapses to stacked on mobile.</p>
+      <div style="margin-top:12px; background:#f9f9f9; border-radius:8px; padding:12px; font-family:'Inter',sans-serif; font-size:11px; display:flex; gap:10px;">
+        <div style="width:42%; flex-shrink:0; border-right:1px solid #e5e5e5; padding-right:10px;">
+          <div style="font-size:9px; font-weight:700; letter-spacing:1px; color:#aaa; text-transform:uppercase; margin-bottom:4px;">Ingredients</div>
+          <div style="border:2px solid #111; border-radius:3px; padding:5px 8px; margin-bottom:8px; min-height:24px; display:flex; gap:4px; flex-wrap:wrap;">
+            <span style="background:#111; color:#fff; border-radius:2px; padding:1px 6px; font-size:9px; font-weight:700;">chicken</span>
+            <span style="background:#111; color:#fff; border-radius:2px; padding:1px 6px; font-size:9px; font-weight:700;">garlic</span>
+          </div>
+          <div style="font-size:9px; font-weight:700; letter-spacing:1px; color:#aaa; text-transform:uppercase; margin-bottom:4px;">Spices</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-bottom:8px;">
+            <span style="border:1.5px solid #d97706; color:#d97706; border-radius:2px; padding:2px 5px; font-size:9px; text-align:center; font-weight:600;">cumin ✓</span>
+            <span style="border:1.5px solid #ddd; color:#aaa; border-radius:2px; padding:2px 5px; font-size:9px; text-align:center;">paprika</span>
+            <span style="border:1.5px solid #ddd; color:#aaa; border-radius:2px; padding:2px 5px; font-size:9px; text-align:center;">basil</span>
+            <span style="border:1.5px solid #ddd; color:#aaa; border-radius:2px; padding:2px 5px; font-size:9px; text-align:center;">thyme</span>
+          </div>
+          <div style="background:#d97706; border-radius:3px; padding:5px; text-align:center; color:#fff; font-size:9px; font-weight:700;">Find Recipes</div>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+            <div style="width:3px; height:14px; background:#d97706; border-radius:1px;"></div>
+            <span style="font-size:9px; font-weight:700; color:#111;">Cook Now</span>
+          </div>
+          <div style="border:1.5px solid #e5e5e5; border-radius:4px; padding:6px; margin-bottom:5px;">
+            <div style="font-size:9px; font-weight:700; color:#111;">Chicken Stir Fry</div>
+            <div style="font-size:8px; color:#aaa;">92% match</div>
+          </div>
+          <div style="border:1.5px solid #e5e5e5; border-radius:4px; padding:6px;">
+            <div style="font-size:9px; font-weight:700; color:#111;">Garlic Noodles</div>
+            <div style="font-size:8px; color:#aaa;">88% match</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px; font-size:10px; color:#888;"><strong>Trade-off:</strong> More complex layout. Excellent desktop UX, requires careful mobile handling.</div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="topbar" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Top Bar Input — Card Grid Results</h3>
+      <p>The input and all controls live in a slim, sticky top bar — ingredients as inline tags, filters and spices hidden behind a compact "Options" popover. Results fill the full page below as a card grid. The page feels like a search engine: one focused input at top, results dominate. Spices and filters are a popover panel, not always visible.</p>
+      <div style="margin-top:12px; background:#f9f9f9; border-radius:8px; padding:12px; font-family:'Inter',sans-serif; font-size:11px;">
+        <div style="background:#111; border-radius:5px; padding:8px 10px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+          <div style="flex:1; display:flex; gap:5px; flex-wrap:wrap;">
+            <span style="background:#d97706; color:#fff; border-radius:2px; padding:2px 7px; font-size:9px; font-weight:700;">chicken</span>
+            <span style="background:#d97706; color:#fff; border-radius:2px; padding:2px 7px; font-size:9px; font-weight:700;">garlic</span>
+            <span style="color:#888; font-size:9px; align-self:center;">add…</span>
+          </div>
+          <span style="border:1px solid #444; color:#aaa; border-radius:3px; padding:2px 7px; font-size:9px;">Options ▾</span>
+          <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 8px; font-size:9px; font-weight:700;">Go</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+          <div style="border:1.5px solid #e0e0e0; border-radius:4px; padding:8px; display:flex; gap:5px;">
+            <div style="width:3px; background:#d97706; border-radius:1px; flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:9px; font-weight:700; color:#111;">Chicken Stir Fry</div>
+              <div style="font-size:8px; color:#aaa; margin-top:1px;">92% · 0 missing</div>
+            </div>
+          </div>
+          <div style="border:1.5px solid #e0e0e0; border-radius:4px; padding:8px; display:flex; gap:5px;">
+            <div style="width:3px; background:#d97706; border-radius:1px; flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:9px; font-weight:700; color:#111;">Garlic Noodles</div>
+              <div style="font-size:8px; color:#aaa; margin-top:1px;">88% · 1 missing</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px; font-size:10px; color:#888;"><strong>Trade-off:</strong> Results get maximum screen space. Options/spices are hidden by default — great for simple use, slightly buried for power users.</div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:24px;"><strong>My recommendation: A or B.</strong> A is simpler and very natural. B is richer on desktop. Tell me which direction feels right in the terminal.</p>

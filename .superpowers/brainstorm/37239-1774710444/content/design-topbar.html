@@ -1,0 +1,91 @@
+<h2>Section 1 of 3 — The Top Input Bar</h2>
+<p class="subtitle">Sticky at the top of the page. Dark background makes it visually anchor the UI. Ingredient tags use amber fill — the only color on the whole bar.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Top bar — default state (no ingredients yet)</div>
+  <div class="mockup-body" style="background:#fff; padding:0;">
+    <div style="background:#111; padding:12px 20px; display:flex; align-items:center; gap:10px; font-family:'Inter',sans-serif;">
+      <span style="font-size:13px; font-weight:700; color:#fff; letter-spacing:-0.4px; white-space:nowrap;">PantryPal</span>
+      <div style="width:1px; height:16px; background:#333; flex-shrink:0;"></div>
+      <div style="flex:1; display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-height:32px; cursor:text;">
+        <span style="color:#555; font-size:12px;">Type an ingredient and press Enter…</span>
+      </div>
+      <button style="border:1px solid #333; color:#888; background:transparent; border-radius:4px; padding:5px 10px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Inter',sans-serif;">Options ▾</button>
+      <button style="background:#d97706; color:#fff; border:none; border-radius:4px; padding:6px 14px; font-size:11px; font-weight:700; cursor:pointer; opacity:0.4; font-family:'Inter',sans-serif;">Find Recipes</button>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:20px;">
+  <div class="mockup-header">Top bar — with ingredients added</div>
+  <div class="mockup-body" style="background:#fff; padding:0;">
+    <div style="background:#111; padding:10px 20px; display:flex; align-items:center; gap:10px; font-family:'Inter',sans-serif; flex-wrap:wrap;">
+      <span style="font-size:13px; font-weight:700; color:#fff; letter-spacing:-0.4px; white-space:nowrap;">PantryPal</span>
+      <div style="width:1px; height:16px; background:#333; flex-shrink:0;"></div>
+      <div style="flex:1; display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-height:32px; cursor:text;">
+        <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 8px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">chicken <span style="opacity:0.7; cursor:pointer;">×</span></span>
+        <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 8px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">garlic <span style="opacity:0.7; cursor:pointer;">×</span></span>
+        <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 8px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">olive oil <span style="opacity:0.7; cursor:pointer;">×</span></span>
+        <span style="color:#555; font-size:11px;">add more…</span>
+      </div>
+      <button style="border:1px solid #444; color:#aaa; background:transparent; border-radius:4px; padding:5px 10px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Inter',sans-serif;">Options ▾</button>
+      <button style="background:#d97706; color:#fff; border:none; border-radius:4px; padding:6px 14px; font-size:11px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif;">Find Recipes</button>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:20px;">
+  <div class="mockup-header">Options popover — open state (replaces the sidebar + spice checklist)</div>
+  <div class="mockup-body" style="background:#fff; padding:0; position:relative;">
+    <div style="background:#111; padding:10px 20px; display:flex; align-items:center; gap:10px; font-family:'Inter',sans-serif;">
+      <span style="font-size:13px; font-weight:700; color:#fff; letter-spacing:-0.4px;">PantryPal</span>
+      <div style="width:1px; height:16px; background:#333;"></div>
+      <div style="flex:1; display:flex; gap:6px; flex-wrap:wrap;">
+        <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 8px; font-size:11px; font-weight:700;">chicken ×</span>
+        <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 8px; font-size:11px; font-weight:700;">garlic ×</span>
+      </div>
+      <button style="border:1px solid #d97706; color:#d97706; background:transparent; border-radius:4px; padding:5px 10px; font-size:11px; font-family:'Inter',sans-serif;">Options ▴</button>
+      <button style="background:#d97706; color:#fff; border:none; border-radius:4px; padding:6px 14px; font-size:11px; font-weight:700; font-family:'Inter',sans-serif;">Find Recipes</button>
+    </div>
+    <!-- Popover -->
+    <div style="background:#fff; border:1.5px solid #e5e5e5; border-top:none; padding:20px; font-family:'Inter',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+      <div style="display:flex; gap:32px; flex-wrap:wrap;">
+        <div style="min-width:180px;">
+          <div style="font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#999; margin-bottom:10px;">Dietary Filters</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span style="background:#111; color:#fff; border-radius:3px; padding:4px 10px; font-size:11px; font-weight:600;">Vegetarian ✓</span>
+            <span style="border:1.5px solid #ddd; color:#888; border-radius:3px; padding:4px 10px; font-size:11px;">Vegan</span>
+            <span style="border:1.5px solid #ddd; color:#888; border-radius:3px; padding:4px 10px; font-size:11px;">Gluten-free</span>
+            <span style="border:1.5px solid #ddd; color:#888; border-radius:3px; padding:4px 10px; font-size:11px;">High-protein</span>
+          </div>
+        </div>
+        <div style="min-width:220px; flex:1;">
+          <div style="font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#999; margin-bottom:10px;">Pantry Spices</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span style="border:1.5px solid #d97706; color:#d97706; border-radius:3px; padding:3px 9px; font-size:11px; font-weight:600;">cumin ✓</span>
+            <span style="border:1.5px solid #d97706; color:#d97706; border-radius:3px; padding:3px 9px; font-size:11px; font-weight:600;">paprika ✓</span>
+            <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:11px;">basil</span>
+            <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:11px;">thyme</span>
+            <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:11px;">oregano</span>
+            <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:11px;">rosemary</span>
+            <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:11px;">ginger</span>
+            <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:11px;">turmeric</span>
+            <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:11px;">cilantro</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#999; margin-bottom:10px;">Results</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:20px; font-weight:700; color:#111;">5</span>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <button style="border:1.5px solid #ddd; background:#fff; border-radius:3px; width:20px; height:16px; font-size:10px; cursor:pointer; line-height:1; font-family:sans-serif;">+</button>
+              <button style="border:1.5px solid #ddd; background:#fff; border-radius:3px; width:20px; height:16px; font-size:10px; cursor:pointer; line-height:1; font-family:sans-serif;">−</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px;">The Options popover replaces the entire sidebar — dietary filters as toggleable pills, spices as a chip grid (much better than a scrollable checkbox list), and a simple +/− for result count. Does this feel right? Tell me in the terminal.</p>

@@ -1,0 +1,140 @@
+<h2>Fixing the color harmony</h2>
+<p class="subtitle">Same layout (Options popover open). Three different color treatments — each resolves the clash differently.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="light" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>All-light — amber only for active states</h3>
+      <p>Drop the dark bar entirely. The top area is white with a clean bottom border. Amber is used <em>only</em> when something is active or selected — nowhere else. Black/white handles everything structural. Much calmer.</p>
+      <div style="background:#fff; border:1.5px solid #e5e5e5; border-radius:8px; overflow:hidden; margin-top:10px; font-family:'Inter',sans-serif; font-size:11px;">
+        <!-- Bar -->
+        <div style="padding:10px 16px; border-bottom:1.5px solid #e5e5e5; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:13px; font-weight:700; color:#111; letter-spacing:-0.4px;">PantryPal</span>
+          <div style="width:1px; height:14px; background:#e5e5e5;"></div>
+          <div style="flex:1; display:flex; gap:5px; flex-wrap:wrap;">
+            <span style="border:2px solid #111; color:#111; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:700;">chicken ×</span>
+            <span style="border:2px solid #111; color:#111; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:700;">garlic ×</span>
+          </div>
+          <span style="border:1.5px solid #d97706; color:#d97706; border-radius:3px; padding:4px 10px; font-size:10px; font-weight:600;">Options ▴</span>
+          <span style="background:#d97706; color:#fff; border-radius:3px; padding:5px 12px; font-size:10px; font-weight:700;">Find Recipes</span>
+        </div>
+        <!-- Popover -->
+        <div style="padding:16px; background:#fafafa;">
+          <div style="display:flex; gap:24px; flex-wrap:wrap;">
+            <div>
+              <div style="font-size:8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#bbb; margin-bottom:8px;">Filters</div>
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <span style="background:#111; color:#fff; border-radius:3px; padding:3px 9px; font-size:10px; font-weight:600;">Vegetarian ✓</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">Vegan</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">Gluten-free</span>
+              </div>
+            </div>
+            <div style="flex:1; min-width:180px;">
+              <div style="font-size:8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#bbb; margin-bottom:8px;">Spices</div>
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <span style="background:#111; color:#fff; border-radius:3px; padding:3px 9px; font-size:10px; font-weight:600;">cumin ✓</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">paprika</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">basil</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">thyme</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:10px;color:#888;margin-top:6px;">Amber appears only on the Options button (when open), the Find Recipes button, and nothing else. Active selections use black fill — one consistent active-state treatment.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="dark" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>All-dark — amber glows on dark</h3>
+      <p>The dark bar extends into the popover. Everything is dark. Amber is bright against dark — tags, active pills, selected spices all use amber. Clean and dramatic, no clash because there's only one background color.</p>
+      <div style="background:#111; border:1.5px solid #222; border-radius:8px; overflow:hidden; margin-top:10px; font-family:'Inter',sans-serif; font-size:11px;">
+        <!-- Bar -->
+        <div style="padding:10px 16px; border-bottom:1px solid #222; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:13px; font-weight:700; color:#fff; letter-spacing:-0.4px;">PantryPal</span>
+          <div style="width:1px; height:14px; background:#333;"></div>
+          <div style="flex:1; display:flex; gap:5px; flex-wrap:wrap;">
+            <span style="background:#d97706; color:#fff; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:700;">chicken ×</span>
+            <span style="background:#d97706; color:#fff; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:700;">garlic ×</span>
+          </div>
+          <span style="border:1.5px solid #d97706; color:#d97706; border-radius:3px; padding:4px 10px; font-size:10px; font-weight:600;">Options ▴</span>
+          <span style="background:#d97706; color:#fff; border-radius:3px; padding:5px 12px; font-size:10px; font-weight:700;">Find Recipes</span>
+        </div>
+        <!-- Popover -->
+        <div style="padding:16px; background:#161616;">
+          <div style="display:flex; gap:24px; flex-wrap:wrap;">
+            <div>
+              <div style="font-size:8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#555; margin-bottom:8px;">Filters</div>
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 9px; font-size:10px; font-weight:600;">Vegetarian ✓</span>
+                <span style="border:1.5px solid #333; color:#555; border-radius:3px; padding:3px 9px; font-size:10px;">Vegan</span>
+                <span style="border:1.5px solid #333; color:#555; border-radius:3px; padding:3px 9px; font-size:10px;">Gluten-free</span>
+              </div>
+            </div>
+            <div style="flex:1; min-width:180px;">
+              <div style="font-size:8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#555; margin-bottom:8px;">Spices</div>
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <span style="background:#d97706; color:#fff; border-radius:3px; padding:3px 9px; font-size:10px; font-weight:600;">cumin ✓</span>
+                <span style="border:1.5px solid #333; color:#555; border-radius:3px; padding:3px 9px; font-size:10px;">paprika</span>
+                <span style="border:1.5px solid #333; color:#555; border-radius:3px; padding:3px 9px; font-size:10px;">basil</span>
+                <span style="border:1.5px solid #333; color:#555; border-radius:3px; padding:3px 9px; font-size:10px;">thyme</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:10px;color:#888;margin-top:6px;">One background tone throughout. Amber pops cleanly. The main page (results) is white — strong contrast when you close the popover.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="split" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Split — dark bar, white popover, no amber on tags</h3>
+      <p>Keep the dark bar, but ingredient tags are white-outlined (not amber-filled) on the dark background. Amber is reserved exclusively for the two action elements: the Options button highlight and the Find Recipes button. Popover is clean white. One color, two uses only.</p>
+      <div style="background:#fff; border:1.5px solid #e5e5e5; border-radius:8px; overflow:hidden; margin-top:10px; font-family:'Inter',sans-serif; font-size:11px;">
+        <!-- Bar -->
+        <div style="background:#111; padding:10px 16px; border-bottom:1px solid #000; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:13px; font-weight:700; color:#fff; letter-spacing:-0.4px;">PantryPal</span>
+          <div style="width:1px; height:14px; background:#333;"></div>
+          <div style="flex:1; display:flex; gap:5px; flex-wrap:wrap;">
+            <span style="border:1.5px solid #fff; color:#fff; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:600;">chicken ×</span>
+            <span style="border:1.5px solid #fff; color:#fff; border-radius:3px; padding:2px 8px; font-size:10px; font-weight:600;">garlic ×</span>
+          </div>
+          <span style="border:1.5px solid #d97706; color:#d97706; border-radius:3px; padding:4px 10px; font-size:10px; font-weight:600;">Options ▴</span>
+          <span style="background:#d97706; color:#fff; border-radius:3px; padding:5px 12px; font-size:10px; font-weight:700;">Find Recipes</span>
+        </div>
+        <!-- Popover -->
+        <div style="padding:16px; background:#fff; border-top:3px solid #d97706;">
+          <div style="display:flex; gap:24px; flex-wrap:wrap;">
+            <div>
+              <div style="font-size:8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#bbb; margin-bottom:8px;">Filters</div>
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <span style="background:#111; color:#fff; border-radius:3px; padding:3px 9px; font-size:10px; font-weight:600;">Vegetarian ✓</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">Vegan</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">Gluten-free</span>
+              </div>
+            </div>
+            <div style="flex:1; min-width:180px;">
+              <div style="font-size:8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#bbb; margin-bottom:8px;">Spices</div>
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <span style="background:#111; color:#fff; border-radius:3px; padding:3px 9px; font-size:10px; font-weight:600;">cumin ✓</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">paprika</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">basil</span>
+                <span style="border:1.5px solid #ddd; color:#999; border-radius:3px; padding:3px 9px; font-size:10px;">thyme</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:10px;color:#888;margin-top:6px;">Amber touches exactly two things: the Options button border (when open) and the Find Recipes button. The amber top-border on the popover ties the two zones together deliberately.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:24px;">Click the one that feels most cohesive, then tell me in the terminal.</p>

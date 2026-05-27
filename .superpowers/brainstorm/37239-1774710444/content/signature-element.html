@@ -1,0 +1,63 @@
+<h2>What's the signature element?</h2>
+<p class="subtitle">Each option keeps the sharp, minimal foundation — but adds one distinctive visual character that separates it from generic AI-built apps. Mix and match is fine; click any you like.</p>
+
+<div class="options" data-multiselect>
+
+  <div class="option" data-choice="accent-color" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>One bold accent color used sparingly</h3>
+      <p>Everything stays near-black and white — except one element (the primary button, active ingredient tags, or a single highlight line) gets a vivid, unexpected color. Think deep amber, forest green, or a warm coral. The contrast makes it feel intentional, not decorated.</p>
+      <div style="display:flex; gap:10px; margin-top:10px; align-items:center;">
+        <div style="width:28px;height:28px;border-radius:50%;background:#d97706;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#059669;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#dc2626;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#7c3aed;"></div>
+        <span style="font-size:11px; color:#888;">one of these, nothing else</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="editorial-type" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Editorial-weight typography</h3>
+      <p>Use a high-contrast type pairing: a condensed or display-weight serif for section headers ("Cook Now", "Almost There") paired with a clean sans for body text. Creates a food-magazine feel while staying minimal — the kind of typographic detail that immediately signals "designer made this."</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px;">
+        <div style="font-family:Georgia,serif; font-size:20px; font-weight:700; color:#111; letter-spacing:-0.5px; line-height:1;">Cook Now</div>
+        <div style="font-family:sans-serif; font-size:11px; color:#666; margin-top:2px;">Recipes you can make tonight</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="ingredient-tags" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Distinctive ingredient tag design</h3>
+      <p>The ingredient chips are the most-touched UI element. Instead of generic pill badges, design them with real character: square corners + dashed border, or a bold outlined style, or a subtle hand-drawn-feeling irregular border radius. Users interact with these constantly — making them beautiful pays off.</p>
+      <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <span style="border:2px solid #111; border-radius:3px; padding:4px 10px; font-size:11px; font-weight:600; color:#111;">chicken</span>
+        <span style="border:2px solid #111; border-radius:3px; padding:4px 10px; font-size:11px; font-weight:600; color:#111;">garlic</span>
+        <span style="border:1.5px dashed #555; border-radius:3px; padding:4px 10px; font-size:11px; color:#555;">+ tomatoes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="layout-asymmetry" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Structural layout personality</h3>
+      <p>Add one layout-level detail that feels intentional: a thick left-border accent on recipe cards, a bold horizontal rule with the section title inline, or a numbered index column beside the recipe list. These are the details that designers use to create systems that feel coherent rather than assembled.</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px; display:flex; gap:10px; align-items:stretch;">
+        <div style="width:3px; background:#111; border-radius:2px; flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#111;">Chicken Stir Fry</div>
+          <div style="font-size:10px; color:#888; margin-top:2px;">4 ingredients · 20 min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:24px;">Select one or more — then tell me in the terminal what you're thinking. These can be combined.</p>

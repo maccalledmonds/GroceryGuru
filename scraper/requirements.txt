@@ -1,0 +1,7 @@
+# Scraper deps. Most are already in pantrypal/requirements.txt; listed here
+# so the scraper folder is self-describing.
+httpx>=0.27.2
+beautifulsoup4>=4.12.0
+tenacity>=9.0.0
+spacy>=3.7.0
+# spaCy model — install with: python -m spacy download en_core_web_sm

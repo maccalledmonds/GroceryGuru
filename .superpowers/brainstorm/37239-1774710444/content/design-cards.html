@@ -1,0 +1,118 @@
+<h2>Section 2 of 3 — Recipe Cards</h2>
+<p class="subtitle">The structural amber left-border is the signature detail. Everything else is black, white, and gray. Two states: collapsed (default) and expanded (instructions visible).</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Cook Now section — card grid</div>
+    <div class="mockup-body" style="background:#f5f5f5; padding:20px; font-family:'Inter',sans-serif;">
+
+      <!-- Section header -->
+      <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:14px;">
+        <div style="width:4px; height:18px; background:#d97706; border-radius:1px; flex-shrink:0; align-self:center;"></div>
+        <span style="font-size:13px; font-weight:700; color:#111; letter-spacing:-0.3px;">Cook Now</span>
+        <span style="font-size:11px; color:#aaa;">3 recipes</span>
+      </div>
+
+      <!-- Card 1 — collapsed default -->
+      <div style="background:#fff; border:1.5px solid #e8e8e8; border-left:4px solid #d97706; border-radius:0 6px 6px 0; padding:14px 16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#111; margin-bottom:2px;">Chicken Stir Fry</div>
+            <div style="font-size:10px; color:#aaa;">Serves 2 · 0 missing ingredients</div>
+          </div>
+          <span style="background:#111; color:#fff; border-radius:3px; padding:3px 8px; font-size:10px; font-weight:700; white-space:nowrap; flex-shrink:0;">92%</span>
+        </div>
+        <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px;">
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">chicken</span>
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">garlic</span>
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">soy sauce</span>
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">+3 more</span>
+        </div>
+        <button style="font-size:10px; color:#aaa; background:transparent; border:none; padding:0; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:'Inter',sans-serif;">
+          <span style="display:inline-block; width:10px; height:10px; border-right:1.5px solid #aaa; border-bottom:1.5px solid #aaa; transform:rotate(45deg); margin-bottom:3px;"></span>
+          Show instructions
+        </button>
+      </div>
+
+      <!-- Card 2 — expanded -->
+      <div style="background:#fff; border:1.5px solid #e8e8e8; border-left:4px solid #d97706; border-radius:0 6px 6px 0; padding:14px 16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#111; margin-bottom:2px;">Garlic Butter Pasta</div>
+            <div style="font-size:10px; color:#aaa;">Serves 4 · 0 missing ingredients</div>
+          </div>
+          <span style="background:#111; color:#fff; border-radius:3px; padding:3px 8px; font-size:10px; font-weight:700; flex-shrink:0;">88%</span>
+        </div>
+        <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px;">
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">pasta</span>
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">garlic</span>
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">butter</span>
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">parsley</span>
+        </div>
+        <button style="font-size:10px; color:#111; background:transparent; border:none; padding:0; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:'Inter',sans-serif; font-weight:600; margin-bottom:10px;">
+          <span style="display:inline-block; width:10px; height:10px; border-right:1.5px solid #111; border-bottom:1.5px solid #111; transform:rotate(-135deg); margin-top:3px;"></span>
+          Hide instructions
+        </button>
+        <div style="border-top:1px solid #f0f0f0; padding-top:10px;">
+          <ol style="margin:0; padding-left:16px; font-size:11px; color:#555; line-height:1.8;">
+            <li>Boil pasta until al dente. Reserve ½ cup pasta water.</li>
+            <li>Melt butter in a pan over medium heat. Add minced garlic and cook 1 min.</li>
+            <li>Toss pasta with garlic butter, adding pasta water as needed.</li>
+            <li>Finish with chopped parsley and salt to taste.</li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Almost There section — with missing ingredients</div>
+    <div class="mockup-body" style="background:#f5f5f5; padding:20px; font-family:'Inter',sans-serif;">
+
+      <!-- Section header -->
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <div style="width:4px; height:18px; background:#ccc; border-radius:1px; flex-shrink:0;"></div>
+        <span style="font-size:13px; font-weight:700; color:#111; letter-spacing:-0.3px;">Almost There</span>
+        <span style="font-size:11px; color:#aaa;">2 recipes</span>
+      </div>
+
+      <!-- Card with missing ingredients -->
+      <div style="background:#fff; border:1.5px solid #e8e8e8; border-left:4px solid #ddd; border-radius:0 6px 6px 0; padding:14px 16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#111; margin-bottom:2px;">Lemon Herb Salmon</div>
+            <div style="font-size:10px; color:#aaa;">Serves 2 · 2 missing ingredients</div>
+          </div>
+          <span style="border:1.5px solid #ddd; color:#aaa; border-radius:3px; padding:3px 8px; font-size:10px; font-weight:700; flex-shrink:0;">67%</span>
+        </div>
+        <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px;">
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">garlic</span>
+          <span style="background:#f5f5f5; color:#555; border-radius:2px; padding:2px 7px; font-size:10px;">olive oil</span>
+          <span style="border:1.5px dashed #ccc; color:#aaa; border-radius:2px; padding:2px 7px; font-size:10px;">salmon</span>
+          <span style="border:1.5px dashed #ccc; color:#aaa; border-radius:2px; padding:2px 7px; font-size:10px;">lemon</span>
+        </div>
+        <div style="font-size:10px; color:#999; margin-bottom:8px;">
+          Need: <span style="color:#555; font-weight:600;">salmon, lemon</span>
+        </div>
+        <button style="font-size:10px; color:#aaa; background:transparent; border:none; padding:0; cursor:pointer; font-family:'Inter',sans-serif;">▸ Show instructions</button>
+      </div>
+
+      <!-- Serving size note -->
+      <div style="margin-top:16px; padding:10px 12px; background:#fff; border:1.5px solid #e8e8e8; border-radius:4px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:10px; color:#888;">Serving size</span>
+        <div style="display:inline-flex; border:1.5px solid #e0e0e0; border-radius:4px; overflow:hidden;">
+          <button style="padding:3px 9px; font-size:10px; font-weight:600; background:#111; color:#fff; border:none; font-family:'Inter',sans-serif;">1×</button>
+          <button style="padding:3px 9px; font-size:10px; color:#888; border:none; background:#fff; font-family:'Inter',sans-serif;">2×</button>
+          <button style="padding:3px 9px; font-size:10px; color:#888; border:none; background:#fff; font-family:'Inter',sans-serif;">4×</button>
+        </div>
+      </div>
+      <p style="font-size:10px; color:#bbb; margin-top:6px;">Serving size moved here — closer to results, more natural.</p>
+
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px;">
+  Key decisions: amber left-border on "Cook Now" cards, gray border on "Almost There" cards (signals lower priority). Match % uses black fill for strong matches, outlined gray for weaker. Missing ingredients shown inline as dashed chips. Serving size control moved near the results. Does this feel right?
+</p>

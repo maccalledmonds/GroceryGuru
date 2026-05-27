@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PantryPal — Refined Design v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #1c1917;
+    background: #FAF9F6;
+  }
+
+  /* ─── NAV ─── */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: #fff;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .nav-logo {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1c1917;
+    letter-spacing: -0.035em;
+    white-space: nowrap;
+  }
+  .nav-divider { width: 1px; height: 20px; background: rgba(0,0,0,0.1); flex-shrink: 0; }
+
+  /* ─── TAG CHIPS ─── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 2px solid #1c1917;
+    border-radius: 5px;
+    padding: 4px 11px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1c1917;
+    line-height: 1.4;
+  }
+  .chip-remove {
+    opacity: 0.35;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 120ms ease;
+    line-height: 1;
+  }
+  .chip-remove:hover { opacity: 0.75; }
+
+  .nav-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-height: 40px;
+    cursor: text;
+  }
+  .nav-placeholder { color: rgba(0,0,0,0.28); font-size: 14px; }
+
+  .btn-options {
+    border: 1.5px solid rgba(0,0,0,0.12);
+    background: transparent;
+    color: #78716c;
+    border-radius: 7px;
+    padding: 0 14px;
+    height: 38px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+  }
+  .btn-options:hover { border-color: rgba(0,0,0,0.22); color: #1c1917; }
+  .btn-options.active {
+    border-color: #d97706;
+    color: #d97706;
+    background: rgba(217,119,6,0.05);
+  }
+
+  .btn-primary {
+    background: #d97706;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 0 20px;
+    height: 38px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 150ms ease, transform 80ms ease-in;
+    letter-spacing: -0.01em;
+  }
+  .btn-primary:hover { background: #b45309; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  /* ─── OPTIONS POPOVER ─── */
+  .popover {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-top: 3px solid #d97706;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
+    padding: 24px 32px;
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .popover-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #a8a29e;
+    margin-bottom: 12px;
+  }
+  .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .pill {
+    border: 1.5px solid rgba(0,0,0,0.12);
+    border-radius: 5px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #78716c;
+    cursor: pointer;
+    background: transparent;
+    font-family: inherit;
+    transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+  }
+  .pill:hover { border-color: rgba(0,0,0,0.25); color: #1c1917; }
+  .pill.active { background: #1c1917; color: #fff; border-color: #1c1917; }
+
+  /* Results slider */
+  .slider-section { min-width: 180px; }
+  .slider-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .slider-num {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1c1917;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .slider-unit { font-size: 13px; color: #a8a29e; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, #d97706 0%, #d97706 33%, #e7e5e4 33%, #e7e5e4 100%);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #d97706;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: transform 120ms ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #c0bbbb;
+    margin-top: 5px;
+  }
+
+  /* ─── MAIN ─── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 36px 32px; }
+
+  /* Serving toggle */
+  .serving-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #a8a29e;
+    margin-bottom: 8px;
+  }
+  .serving-toggle {
+    display: inline-flex;
+    border: 1.5px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .serving-opt {
+    padding: 7px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    border: none;
+    background: transparent;
+    color: #78716c;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+  .serving-opt + .serving-opt { border-left: 1.5px solid rgba(0,0,0,0.08); }
+  .serving-opt.active { background: #1c1917; color: #fff; }
+  .serving-opt:hover:not(.active) { background: rgba(0,0,0,0.04); color: #1c1917; }
+
+  /* Section headers */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .section-bar { width: 4px; height: 20px; border-radius: 2px; flex-shrink: 0; }
+  .section-bar.amber { background: #d97706; }
+  .section-bar.muted { background: rgba(0,0,0,0.15); }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1c1917;
+    letter-spacing: -0.015em;
+  }
+  .section-sub { font-size: 13px; color: #a8a29e; }
+  .section-count { font-size: 12px; color: #a8a29e; }
+
+  /* Card grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+
+  /* Recipe card */
+  .recipe-card {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-left-width: 4px;
+    border-radius: 0 12px 12px 0;
+    padding: 20px;
+    transition: border-color 150ms ease;
+  }
+  .recipe-card.cook-now { border-left-color: #d97706; }
+  .recipe-card.almost-there { border-left-color: rgba(0,0,0,0.15); }
+  .recipe-card:hover { border-color: rgba(0,0,0,0.13); }
+  .recipe-card.cook-now:hover { border-left-color: #d97706; }
+  .recipe-card.almost-there:hover { border-left-color: rgba(0,0,0,0.18); }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1c1917;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+  .card-meta { font-size: 12px; color: #a8a29e; }
+
+  .match-badge {
+    border-radius: 5px;
+    padding: 3px 9px;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+  }
+  .match-badge.strong { background: #1c1917; color: #fff; }
+  .match-badge.weak { border: 1.5px solid rgba(0,0,0,0.15); color: #a8a29e; }
+
+  .ingredient-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .ing-chip {
+    background: rgba(0,0,0,0.04);
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-size: 12px;
+    color: #57534e;
+  }
+  .ing-chip.missing {
+    background: transparent;
+    border: 1px dashed rgba(0,0,0,0.2);
+    color: #a8a29e;
+  }
+
+  .missing-note { font-size: 12px; color: #78716c; margin-bottom: 12px; }
+  .missing-note strong { font-weight: 600; color: #57534e; }
+
+  .instructions-toggle {
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 12px;
+    color: #a8a29e;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    transition: color 150ms ease;
+  }
+  .instructions-toggle:hover { color: #57534e; }
+  .chevron {
+    width: 9px; height: 9px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+    flex-shrink: 0;
+  }
+  .chevron.up { transform: rotate(-135deg); margin-bottom: -2px; margin-top: 2px; }
+
+  .instructions {
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding-top: 14px;
+    margin-top: 14px;
+  }
+  .instructions ol { padding-left: 18px; }
+  .instructions li {
+    font-size: 13px;
+    color: #57534e;
+    line-height: 1.75;
+    margin-bottom: 6px;
+  }
+  .instructions li strong { font-weight: 600; color: #1c1917; }
+
+  /* Skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, #f0ede8 25%, #e6e2db 50%, #f0ede8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Idle state */
+  .idle-state { text-align: center; padding: 96px 40px; }
+  .idle-icon { width: 48px; height: 48px; margin: 0 auto 20px; opacity: 0.18; }
+  .idle-heading {
+    font-size: 18px; font-weight: 600; color: #1c1917;
+    letter-spacing: -0.025em; margin-bottom: 8px;
+  }
+  .idle-sub { font-size: 14px; color: #a8a29e; }
+
+  .section-gap { margin-top: 36px; }
+  .annotation {
+    font-size: 11px; color: #b0a89e;
+    border-left: 2px solid #d97706;
+    padding-left: 8px; margin: 10px 0 16px;
+    font-style: italic;
+  }
+
+  /* ─── RESPONSIVE NOTES BANNER ─── */
+  .responsive-note {
+    background: rgba(217,119,6,0.06);
+    border: 1px solid rgba(217,119,6,0.2);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 28px;
+    font-size: 12px;
+    color: #92400e;
+  }
+  .responsive-note strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ─── TOP NAV ─── -->
+<nav class="nav">
+  <span class="nav-logo">PantryPal</span>
+  <div class="nav-divider"></div>
+  <div class="nav-input">
+    <span class="chip">chicken <span class="chip-remove">×</span></span>
+    <span class="chip">garlic <span class="chip-remove">×</span></span>
+    <span class="chip">olive oil <span class="chip-remove">×</span></span>
+    <span class="nav-placeholder">add more…</span>
+  </div>
+  <button class="btn-options active">Options ▴</button>
+  <button class="btn-primary">Find Recipes</button>
+</nav>
+
+<!-- ─── OPTIONS POPOVER ─── -->
+<div class="popover">
+  <div>
+    <div class="popover-label">Dietary</div>
+    <div class="pill-group">
+      <button class="pill active">Vegetarian</button>
+      <button class="pill">Vegan</button>
+      <button class="pill">Gluten-free</button>
+      <button class="pill">High-protein</button>
+    </div>
+  </div>
+
+  <div style="flex:1; min-width:240px;">
+    <div class="popover-label">Pantry Spices</div>
+    <div class="pill-group">
+      <button class="pill active">cumin</button>
+      <button class="pill active">paprika</button>
+      <button class="pill">basil</button>
+      <button class="pill">thyme</button>
+      <button class="pill">oregano</button>
+      <button class="pill">rosemary</button>
+      <button class="pill">ginger</button>
+      <button class="pill">turmeric</button>
+      <button class="pill">cilantro</button>
+      <button class="pill">bay leaf</button>
+      <button class="pill">dill</button>
+    </div>
+  </div>
+
+  <div class="slider-section">
+    <div class="popover-label">Number of Results</div>
+    <div class="slider-row">
+      <span class="slider-num">5</span>
+      <span class="slider-unit">recipes</span>
+    </div>
+    <input type="range" min="1" max="20" value="5">
+    <div class="slider-labels"><span>1</span><span>20</span></div>
+  </div>
+</div>
+
+<!-- ─── MAIN ─── -->
+<main class="main">
+
+  <div class="responsive-note">
+    <strong>Responsive sizing note (for implementation):</strong> Nav height 64px → 56px on tablet → full-width stacked on mobile. Card grid: 3 cols on desktop, 2 on tablet (≥768px), 1 on mobile (&lt;640px). Popover becomes a bottom sheet on mobile. All font sizes scale down ~1–2px at tablet breakpoint. Chips wrap naturally.
+  </div>
+
+  <div style="margin-bottom: 24px;">
+    <div class="serving-label">Serving size</div>
+    <div class="serving-toggle">
+      <button class="serving-opt active">1×</button>
+      <button class="serving-opt">2×</button>
+      <button class="serving-opt">4×</button>
+    </div>
+  </div>
+
+  <!-- Cook Now -->
+  <div class="section-header">
+    <div class="section-bar amber"></div>
+    <span class="section-title">Cook Now</span>
+    <span class="section-count">3 recipes</span>
+  </div>
+  <p class="annotation">Amber left-border = exact match. Black match badge for strong scores.</p>
+
+  <div class="card-grid">
+
+    <div class="recipe-card cook-now">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Chicken Stir Fry</div>
+          <div class="card-meta">Serves 2 · 0 missing</div>
+        </div>
+        <span class="match-badge strong">92%</span>
+      </div>
+      <div class="ingredient-chips">
+        <span class="ing-chip">chicken</span>
+        <span class="ing-chip">garlic</span>
+        <span class="ing-chip">soy sauce</span>
+        <span class="ing-chip">sesame oil</span>
+        <span class="ing-chip" style="color:#a8a29e; font-style:italic;">+2 more</span>
+      </div>
+      <button class="instructions-toggle">
+        <span class="chevron"></span>Show instructions
+      </button>
+    </div>
+
+    <div class="recipe-card cook-now">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Garlic Butter Pasta</div>
+          <div class="card-meta">Serves 4 · 0 missing</div>
+        </div>
+        <span class="match-badge strong">88%</span>
+      </div>
+      <div class="ingredient-chips">
+        <span class="ing-chip">pasta</span>
+        <span class="ing-chip">garlic</span>
+        <span class="ing-chip">butter</span>
+        <span class="ing-chip">parsley</span>
+      </div>
+      <button class="instructions-toggle" style="color:#57534e; margin-bottom:0;">
+        <span class="chevron up"></span>Hide instructions
+      </button>
+      <div class="instructions">
+        <ol>
+          <li>Boil pasta until al dente. Reserve <strong>½ cup pasta water</strong> before draining.</li>
+          <li>Melt <strong>3 tbsp butter</strong> in a pan. Add <strong>4 cloves minced garlic</strong>, cook <strong>1 minute</strong>.</li>
+          <li>Toss pasta with garlic butter, adding pasta water until silky.</li>
+          <li>Finish with <strong>fresh parsley</strong> and salt. Serve immediately.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Skeleton -->
+    <div class="recipe-card cook-now" style="border-left-color: rgba(0,0,0,0.08);">
+      <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
+        <div>
+          <div class="skeleton" style="height:15px; width:150px; margin-bottom:7px;"></div>
+          <div class="skeleton" style="height:12px; width:100px;"></div>
+        </div>
+        <div class="skeleton" style="height:24px; width:44px; border-radius:5px;"></div>
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:14px;">
+        <div class="skeleton" style="height:24px; width:68px;"></div>
+        <div class="skeleton" style="height:24px; width:56px;"></div>
+        <div class="skeleton" style="height:24px; width:76px;"></div>
+      </div>
+      <div class="skeleton" style="height:12px; width:110px;"></div>
+    </div>
+
+  </div>
+
+  <!-- Almost There -->
+  <div class="section-header section-gap">
+    <div class="section-bar muted"></div>
+    <span class="section-title">Almost There</span>
+    <span class="section-count">2 recipes</span>
+  </div>
+  <p class="annotation">Gray border = partial match. Outlined gray badge. Dashed chips = missing ingredients.</p>
+
+  <div class="card-grid">
+
+    <div class="recipe-card almost-there">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Lemon Herb Salmon</div>
+          <div class="card-meta">Serves 2 · 2 missing</div>
+        </div>
+        <span class="match-badge weak">67%</span>
+      </div>
+      <div class="ingredient-chips">
+        <span class="ing-chip">garlic</span>
+        <span class="ing-chip">olive oil</span>
+        <span class="ing-chip missing">salmon</span>
+        <span class="ing-chip missing">lemon</span>
+      </div>
+      <div class="missing-note">Need: <strong>salmon, lemon</strong></div>
+      <button class="instructions-toggle">
+        <span class="chevron"></span>Show instructions
+      </button>
+    </div>
+
+    <div class="recipe-card almost-there">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Mushroom Risotto</div>
+          <div class="card-meta">Serves 4 · 1 missing</div>
+        </div>
+        <span class="match-badge weak">71%</span>
+      </div>
+      <div class="ingredient-chips">
+        <span class="ing-chip">olive oil</span>
+        <span class="ing-chip">garlic</span>
+        <span class="ing-chip">butter</span>
+        <span class="ing-chip missing">arborio rice</span>
+      </div>
+      <div class="missing-note">Need: <strong>arborio rice</strong></div>
+      <button class="instructions-toggle">
+        <span class="chevron"></span>Show instructions
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Idle state -->
+  <div style="margin-top:44px; border-top: 1px solid rgba(0,0,0,0.06); padding-top:44px;">
+    <p class="annotation">Idle state before first search.</p>
+    <div class="idle-state">
+      <svg class="idle-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.25">
+        <rect x="7" y="9" width="34" height="32" rx="4"/>
+        <line x1="14" y1="20" x2="34" y2="20"/>
+        <line x1="14" y1="27" x2="27" y2="27"/>
+        <line x1="14" y1="34" x2="22" y2="34"/>
+      </svg>
+      <div class="idle-heading">Your pantry, your recipes</div>
+      <div class="idle-sub">Add what's in your fridge and we'll find what's for dinner.</div>
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>
